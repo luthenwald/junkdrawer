@@ -7,7 +7,7 @@ A minimal, keyboard-only launcher for macOS.
 - Launches at login and stays out of the way until summoned with `⌃⇧Space`.
 - Opens apps, and bookmarks from a plain text file in the default browser.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
-- `?` looks a word up in the macOS dictionary.
+- `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
 - Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
 - Has no menu. Reload data, Edit bookmarks, Show logs and Quit junkdrawer are found and run like apps.
 
