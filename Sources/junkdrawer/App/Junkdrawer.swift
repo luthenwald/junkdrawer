@@ -1,0 +1,13 @@
+import AppKit
+
+@main
+enum Junkdrawer {
+   @MainActor
+   static func main() {
+      let app = NSApplication.shared
+      let delegate = AppDelegate()
+      app.delegate = delegate
+      // NSApplication holds its delegate weakly.
+      withExtendedLifetime(delegate) { app.run() }
+   }
+}
