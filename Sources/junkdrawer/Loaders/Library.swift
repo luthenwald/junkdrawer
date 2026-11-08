@@ -4,9 +4,10 @@ import JunkdrawerCore
 
 /// Everything the panel can list: apps, bookmarks, the built-in commands
 /// and the symbol table, published together whenever a source changes.
+/// The app folders and the bookmarks file follow the settings.
 @MainActor
 final class Library {
-   let bookmarksFile: URL
+   private let settings: Settings
    private let publish: (_ index: Index, _ icons: [String: CGImage]) -> Void
    private var apps: [Item] = []
    private var bookmarks: [Item] = []
@@ -17,24 +18,36 @@ final class Library {
    private var symbolsSource: SymbolsSource?
 
    init(
-      bookmarksFile: URL = BookmarksSource.defaultFile, symbolsFile: URL? = SymbolsSource.defaultFile,
+      settings: Settings, symbolsFile: URL? = SymbolsSource.defaultFile,
       publish: @escaping (_ index: Index, _ icons: [String: CGImage]) -> Void
    ) {
-      self.bookmarksFile = bookmarksFile
+      self.settings = settings
       self.publish = publish
       symbolsSource = SymbolsSource(file: symbolsFile) { [unowned self] table in
          symbols = table
          push()
       }
-      appsSource = AppsSource { [unowned self] items, icons in
+      appsSource = AppsSource(folders: Self.appFolders(settings)) { [unowned self] items, icons in
          apps = items
          self.icons = icons
          push()
       }
-      bookmarksSource = BookmarksSource(file: bookmarksFile) { [unowned self] items in
-         bookmarks = items
-         push()
+      track { [unowned self] in appsSource?.folders = Self.appFolders(settings) }
+      track { [unowned self] in
+         let file = settings.bookmarksURL
+         guard file != bookmarksSource?.file else { return }
+         bookmarksSource?.stop()
+         bookmarksSource = BookmarksSource(file: file) { [unowned self] items in
+            bookmarks = items
+            push()
+         }
       }
+   }
+
+   var bookmarksFile: URL { settings.bookmarksURL }
+
+   private static func appFolders(_ settings: Settings) -> [String] {
+      AppScanner.builtIn + settings.appFolders.filter { !AppScanner.builtIn.contains($0) }
    }
 
    func reload() {

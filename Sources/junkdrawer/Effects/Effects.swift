@@ -9,7 +9,8 @@ struct Effects {
    /// Reloads apps and bookmarks, for the Reload data command.
    let reload: () -> Void
    let openSettings: () -> Void
-   let bookmarksFile: URL
+   /// The bookmarks file in use, which Settings can change.
+   let bookmarksFile: () -> URL
    let inserter = Inserter()
 
    nonisolated static let logFile = FileManager.default.homeDirectoryForCurrentUser
@@ -67,6 +68,7 @@ struct Effects {
    /// Creates the file with a commented example when it is missing, then
    /// opens it in the default text editor; it has no extension to go by.
    private func editBookmarks() {
+      let bookmarksFile = bookmarksFile()
       let manager = FileManager.default
       do {
          if !manager.fileExists(atPath: bookmarksFile.path) {

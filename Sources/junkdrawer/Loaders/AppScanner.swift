@@ -5,8 +5,9 @@ import JunkdrawerCore
 enum AppScanner {
    private static let home = FileManager.default.homeDirectoryForCurrentUser.path
 
-   /// Searched one level into plain folders, such as Setapp and Chrome Apps.
-   static let folders = [
+   /// Searched one level into plain folders, such as Setapp and Chrome
+   /// Apps, as the folders added in Settings are.
+   static let builtIn = [
       "/Applications",
       "/Applications/Utilities",
       "/System/Applications",
@@ -17,7 +18,7 @@ enum AppScanner {
    /// Apps outside those folders that belong in the list.
    private static let extras = ["/System/Library/CoreServices/Finder.app"]
 
-   static func scan() -> [Item] {
+   static func scan(_ folders: [String]) -> [Item] {
       let found = folders.flatMap { bundles(in: URL(fileURLWithPath: $0), depth: 1) }
          + extras.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
       var seen = Set<String>()

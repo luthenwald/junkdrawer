@@ -3,6 +3,8 @@ import JunkdrawerCore
 
 /// Keeps the app list current: scans at launch and after changes in the app
 /// folders, off the main thread, then renders the icons it does not have yet.
+/// A folder that is not there, such as one on a drive not connected, gives
+/// no apps.
 @MainActor
 final class AppsSource {
    private let publish: (_ items: [Item], _ icons: [String: CGImage]) -> Void
@@ -10,16 +12,30 @@ final class AppsSource {
    private var scan: Task<Void, Never>?
    private var watcher: FolderWatcher?
 
-   init(publish: @escaping (_ items: [Item], _ icons: [String: CGImage]) -> Void) {
+   /// Changing them watches and scans the new ones.
+   var folders: [String] {
+      didSet {
+         guard folders != oldValue else { return }
+         watch()
+         reload()
+      }
+   }
+
+   init(folders: [String], publish: @escaping (_ items: [Item], _ icons: [String: CGImage]) -> Void) {
+      self.folders = folders
       self.publish = publish
-      watcher = FolderWatcher(paths: AppScanner.folders) { [unowned self] in reload() }
+      watch()
       reload()
+   }
+
+   private func watch() {
+      watcher = FolderWatcher(paths: folders) { [unowned self] in reload() }
    }
 
    func reload() {
       scan?.cancel()
-      scan = Task {
-         let items = await Task.detached { AppScanner.scan() }.value
+      scan = Task { [folders] in
+         let items = await Task.detached { AppScanner.scan(folders) }.value
          guard !Task.isCancelled else { return }
          publish(items, icons)
          let missing = items.filter { icons[$0.id] == nil }

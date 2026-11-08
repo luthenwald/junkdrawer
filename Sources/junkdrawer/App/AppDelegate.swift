@@ -28,10 +28,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       NSApp.setActivationPolicy(.accessory)
 
       let panel = PanelController(usage: UsageStore())
-      let library = Library { index, icons in panel.update(index: index, icons: icons) }
+      let library = Library(settings: settings) { index, icons in panel.update(index: index, icons: icons) }
       let shortcut = GlobalShortcut(settings: settings) { panel.toggle() }
       let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem, shortcut: shortcut)
-      let effects = Effects(reload: { library.reload() }, openSettings: { settingsWindow.show() }, bookmarksFile: library.bookmarksFile)
+      let effects = Effects(reload: { library.reload() }, openSettings: { settingsWindow.show() }, bookmarksFile: { library.bookmarksFile })
       let confirmation = Confirmation()
       panel.perform = { [unowned panel] item, action in
          let outcome = effects.perform(action)

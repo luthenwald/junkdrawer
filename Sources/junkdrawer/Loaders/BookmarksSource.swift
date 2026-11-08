@@ -33,6 +33,12 @@ final class BookmarksSource {
       }
    }
 
+   /// Stops reading and watching, before another file takes over.
+   func stop() {
+      read?.cancel()
+      watcher = nil
+   }
+
    /// The file's folder once it exists, its parent until then, so creating
    /// the folder is noticed too.
    private func watch() {

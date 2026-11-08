@@ -7,7 +7,7 @@ import Foundation
 final class FolderWatcher {
    private let onChange: () -> Void
    // Also released in `deinit`, which is not isolated to the main actor.
-   // The watcher lives as long as the app, so that never races.
+   // Watchers are made and dropped on the main thread, so that never races.
    nonisolated(unsafe) private var stream: FSEventStreamRef?
 
    init(paths: [String], onChange: @escaping () -> Void) {

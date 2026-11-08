@@ -7,6 +7,14 @@ import Observation
 final class Settings {
    var shortcut = stored(.shortcut, default: Shortcut.toggle) { didSet { store(shortcut, as: .shortcut) } }
    var appearance = stored(.appearance, default: Appearance.system) { didSet { store(appearance, as: .appearance) } }
+   /// The path of the bookmarks file, `nil` for the default one.
+   var bookmarksFile = stored(.bookmarksFile, default: String?.none) { didSet { store(bookmarksFile, as: .bookmarksFile) } }
+   /// Folders searched for apps besides the usual ones, as paths.
+   var appFolders = stored(.appFolders, default: [String]()) { didSet { store(appFolders, as: .appFolders) } }
+
+   var bookmarksURL: URL {
+      bookmarksFile.map { URL(filePath: $0) } ?? BookmarksSource.defaultFile
+   }
 }
 
 enum Appearance: String, Codable, CaseIterable {
@@ -25,6 +33,8 @@ enum Appearance: String, Codable, CaseIterable {
 private enum Key: String {
    case shortcut = "Shortcut"
    case appearance = "Appearance"
+   case bookmarksFile = "BookmarksFile"
+   case appFolders = "AppFolders"
 }
 
 private func stored<Value: Decodable>(_ key: Key, default value: Value) -> Value {
