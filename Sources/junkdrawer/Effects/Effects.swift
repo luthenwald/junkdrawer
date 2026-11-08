@@ -8,6 +8,7 @@ import os
 struct Effects {
    /// Reloads apps and bookmarks, for the Reload data command.
    let reload: () -> Void
+   let openSettings: () -> Void
    let bookmarksFile: URL
    let inserter = Inserter()
 
@@ -45,6 +46,8 @@ struct Effects {
          editBookmarks()
       case .command(.showLogs):
          showLogs()
+      case .command(.settings):
+         openSettings()
       case .command(.quit):
          NSApp.terminate(nil)
       case .openDefinition(let word):

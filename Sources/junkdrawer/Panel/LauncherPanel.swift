@@ -12,6 +12,8 @@ final class LauncherPanel: NSPanel {
    var onCancel: () -> Void = {}
    /// ⌘↵, which the field editor does not pass on as a command.
    var onSecondary: () -> Void = {}
+   /// ⌘,, as in apps with a menu.
+   var onSettings: () -> Void = {}
    let query = QueryField()
    private let details = Details()
    var list: ResultList { details.list }
@@ -116,6 +118,10 @@ final class LauncherPanel: NSPanel {
       let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
       if modifiers == .command, [kVK_Return, kVK_ANSI_KeypadEnter].contains(Int(event.keyCode)) {
          onSecondary()
+         return true
+      }
+      if modifiers == .command, Int(event.keyCode) == kVK_ANSI_Comma {
+         onSettings()
          return true
       }
       if let key = event.charactersIgnoringModifiers, let edit = Self.editing[key], edit.modifiers == modifiers,

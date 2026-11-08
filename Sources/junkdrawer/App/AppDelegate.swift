@@ -5,6 +5,8 @@ import os
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
    private let loginItem = LoginItem()
+   private let settings = Settings()
+   private var settingsWindow: SettingsWindow?
    private var panel: PanelController?
    private var library: Library?
    private var hotKey: HotKey?
@@ -27,13 +29,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
       let panel = PanelController(usage: UsageStore())
       let library = Library { index, icons in panel.update(index: index, icons: icons) }
-      let effects = Effects(reload: { library.reload() }, bookmarksFile: library.bookmarksFile)
+      let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem)
+      let effects = Effects(reload: { library.reload() }, openSettings: { settingsWindow.show() }, bookmarksFile: library.bookmarksFile)
       let confirmation = Confirmation()
       panel.perform = { [unowned panel] item, action in
          let outcome = effects.perform(action)
          if let text = item.confirmation(for: action, outcome: outcome) { confirmation.show(text, on: panel.screen) }
       }
       self.library = library
+      self.settingsWindow = settingsWindow
+      track { [settings] in NSApp.appearance = settings.appearance.nsAppearance }
       let hotKey = HotKey { panel.toggle() }
       register(hotKey)
       self.panel = panel

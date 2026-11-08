@@ -51,7 +51,8 @@ extension Item {
       case .command(.reload): "reloaded apps and bookmarks"
       case .command(.editBookmarks): "opened the bookmarks file"
       case .command(.showLogs): "opened the log"
-      case .command(.quit): nil
+      // The window shows itself.
+      case .command(.settings), .command(.quit): nil
       }
    }
 

@@ -3,6 +3,7 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
    case reload
    case editBookmarks
    case showLogs
+   case settings
    case quit
 
    public var title: String {
@@ -10,15 +11,23 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
       case .reload: "Reload data"
       case .editBookmarks: "Edit bookmarks"
       case .showLogs: "Show logs"
+      case .settings: "Settings"
       case .quit: "Quit junkdrawer"
       }
    }
 
-   /// One row per command, matched like apps.
-   public static let items: [Item] = allCases.map { command in
+   /// Other words that find the command.
+   public var keywords: String {
+      self == .settings ? "preferences" : ""
+   }
+
+   /// The command's row, matched like apps.
+   public var item: Item {
       Item(
-         id: "cmd:\(command.rawValue)", kind: .command, title: command.title, subtitle: "",
-         trailing: "command", primary: .command(command), secondary: .command(command)
+         id: "cmd:\(rawValue)", kind: .command, title: title, subtitle: "", keywords: keywords,
+         trailing: "command", primary: .command(self), secondary: .command(self)
       )
    }
+
+   public static let items: [Item] = allCases.map(\.item)
 }

@@ -45,6 +45,10 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.query.delegate = self
       panel.onCancel = { [unowned self] in hide() }
       panel.onSecondary = { [unowned self] in run(\.secondary) }
+      panel.onSettings = { [unowned self] in
+         hide()
+         perform(Command.settings.item, .command(.settings))
+      }
    }
 
    /// New data from the loaders. The selection stays on the same item when
@@ -85,8 +89,9 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       guard panel.isVisible else { return }
       panel.orderOut(nil)
       clear()
-      // Reopening from Finder activates the app; hiding it hands focus back.
-      if NSApp.isActive { NSApp.hide(nil) }
+      // Reopening from Finder activates the app; hiding it hands focus back,
+      // unless the settings window is open.
+      if NSApp.isActive, !NSApp.windows.contains(where: { $0.isVisible && $0.canBecomeMain }) { NSApp.hide(nil) }
    }
 
    func windowDidResignKey(_ notification: Notification) {
