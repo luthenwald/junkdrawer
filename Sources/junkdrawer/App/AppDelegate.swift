@@ -5,6 +5,7 @@ import os
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
    private let loginItem = LoginItem()
+   private var panel: PanelController?
    private var hotKey: HotKey?
    private var termination: (any DispatchSourceSignal)?
 
@@ -21,21 +22,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       // No Dock icon and no visible menu bar, also when run as a bare binary.
       NSApp.setActivationPolicy(.accessory)
 
-      // Milestone 01/06: replace the log line with the panel's toggle.
-      let hotKey = HotKey { Logger.app.notice("hotkey pressed") }
+      let panel = PanelController()
+      let hotKey = HotKey { panel.toggle() }
       do {
          try hotKey.register(.toggle)
       } catch {
          Logger.app.error("registering the global shortcut failed with status \(error.status, privacy: .public)")
       }
+      self.panel = panel
       self.hotKey = hotKey
       loginItem.registerOnFirstLaunch()
    }
 
-   /// Opening the app again while it runs will show the panel, in case the
+   /// Opening the app again while it runs shows the panel, in case the
    /// hotkey is taken or broken.
    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-      Logger.app.notice("reopened")
+      panel?.show()
       return false
    }
 
