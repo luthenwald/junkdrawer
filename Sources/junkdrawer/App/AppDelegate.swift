@@ -1,5 +1,6 @@
 import AppKit
 import JunkdrawerCore
+import os
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -21,11 +22,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       NSApp.setActivationPolicy(.accessory)
 
       // Milestone 01/06: replace the log line with the panel's toggle.
-      let hotKey = HotKey { NSLog("Junkdrawer: hotkey pressed") }
+      let hotKey = HotKey { Logger.app.notice("hotkey pressed") }
       do {
          try hotKey.register(.toggle)
       } catch {
-         NSLog("Junkdrawer: registering the global shortcut failed with status \(error.status)")
+         Logger.app.error("registering the global shortcut failed with status \(error.status, privacy: .public)")
       }
       self.hotKey = hotKey
       loginItem.registerOnFirstLaunch()
@@ -34,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
    /// Opening the app again while it runs will show the panel, in case the
    /// hotkey is taken or broken.
    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-      NSLog("Junkdrawer: reopened")
+      Logger.app.notice("reopened")
       return false
    }
 

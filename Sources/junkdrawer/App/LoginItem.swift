@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 import ServiceManagement
 
 /// The app as a login item. The state is read from the system rather than
@@ -22,7 +23,7 @@ final class LoginItem {
       do {
          if enabled { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
       } catch {
-         NSLog("Junkdrawer: changing the login item failed: \(error)")
+         Logger.app.error("changing the login item failed: \(String(describing: error), privacy: .public)")
       }
       // The user turned it off in System Settings before and has to allow it there.
       if enabled, SMAppService.mainApp.status == .requiresApproval { SMAppService.openSystemSettingsLoginItems() }

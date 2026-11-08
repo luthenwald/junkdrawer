@@ -30,7 +30,7 @@ gen:
 
 # Shows recent log lines from the running app.
 log:
-   log show --last 10m --predicate 'process == "Junkdrawer"' --style compact
+   log show --last 10m --predicate 'subsystem == "junkdrawer.junkdrawer"' --style compact
 
 # Quits a running Junkdrawer and waits until it is gone. Opening the app while
 # the old process is still exiting fails with error -600.
