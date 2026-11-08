@@ -1,5 +1,6 @@
 import AppKit
 import JunkdrawerCore
+import os
 
 /// Shows and hides the panel, ranks the query and moves the selection. It
 /// opens empty on the screen under the pointer and hides on Esc, on focus
@@ -54,10 +55,17 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// Without activating the app, so an insert later lands in the app that
    /// was in front, and hiding needs no focus hand-back.
    func show() {
+      let start = ContinuousClock.now
       place()
       panel.makeKeyAndOrderFront(nil)
       panel.makeFirstResponder(panel.query)
       panel.invalidateShadow()
+      // Committed to the window server; the next turn of the main queue
+      // comes after the panel drew.
+      CATransaction.flush()
+      DispatchQueue.main.async {
+         Logger.app.debug("panel shown in \(start.millisecondsAgo, format: .fixed(precision: 1), privacy: .public) ms")
+      }
    }
 
    func hide() {
@@ -127,11 +135,13 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// dictionary mode the rows come once the look-up answers; until then
    /// the previous ones stay, so typing does not flicker.
    private func refresh(keeping id: String?) {
+      let start = ContinuousClock.now
       let raw = panel.query.stringValue
       let query = Query(raw)
       guard query.mode == .dictionary else {
          dictionary.cancel()
          show(JunkdrawerCore.rows(for: query, in: index, usage: usage.usage, now: Date()), [:], empty: raw.isEmpty ? "No recent picks" : "No matches", keeping: id)
+         Logger.app.debug("\(query.label, privacy: .public), \(query.text.count, privacy: .public) characters: \(self.rows.count, privacy: .public) rows in \(start.millisecondsAgo, format: .fixed(precision: 1), privacy: .public) ms")
          return
       }
       guard !query.text.isEmpty else {
@@ -144,6 +154,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
          guard let self, Query(panel.query.stringValue) == query else { return }
          let result = dictionaryRows(query.text, found)
          show(result.rows, result.definitions, empty: "No entry for “\(query.text)”", keeping: id, lookup: true)
+         Logger.app.debug("dictionary, \(query.text.count, privacy: .public) characters: \(result.rows.count, privacy: .public) rows answered in \(start.millisecondsAgo, format: .fixed(precision: 1), privacy: .public) ms")
       }
    }
 

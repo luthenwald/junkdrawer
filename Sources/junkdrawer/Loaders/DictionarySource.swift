@@ -50,7 +50,7 @@ final class DictionarySource {
          found = guesses.compactMap { word in definition(of: word).map { Lookup(word: word, text: $0, source: .guess) } }
       }
       let elapsed = Int(Date().timeIntervalSince(start) * 1000)
-      Logger.app.debug("looked up \(text, privacy: .public): \(found.count, privacy: .public) entries in \(elapsed, privacy: .public) ms")
+      Logger.app.debug("looked up \(text.count, privacy: .public) characters: \(found.count, privacy: .public) entries in \(elapsed, privacy: .public) ms")
       return Task.isCancelled ? nil : found
    }
 

@@ -1,4 +1,6 @@
 import Carbon.HIToolbox
+import Foundation
+import os
 
 /// A key code plus Carbon modifier flags, and the name of the key as it
 /// was typed, for display.
@@ -43,6 +45,10 @@ final class HotKey {
             event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
             nil, MemoryLayout<EventHotKeyID>.size, nil, &pressed
          )
+         // How long the key press waited for the main thread, which adds to
+         // the time until the panel shows.
+         let waited = (ProcessInfo.processInfo.systemUptime - GetEventTime(event)) * 1000
+         Logger.app.debug("hotkey event waited \(waited, format: .fixed(precision: 1), privacy: .public) ms")
          // Carbon delivers hotkey events on the main thread.
          return MainActor.assumeIsolated {
             let hotKey = Unmanaged<HotKey>.fromOpaque(userData).takeUnretainedValue()

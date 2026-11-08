@@ -39,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       self.panel = panel
       self.hotKey = hotKey
       loginItem.registerOnFirstLaunch()
+      Logger.app.notice("login item \(self.loginItem.isEnabled ? "enabled" : "not enabled", privacy: .public)")
    }
 
    /// ⌘Space, or ⌃⇧Space when ⌘Space is taken, as it is while Spotlight's
