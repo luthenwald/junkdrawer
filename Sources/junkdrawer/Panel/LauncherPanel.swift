@@ -20,6 +20,9 @@ final class LauncherPanel: NSPanel {
    var footer: Footer { details.footer }
    var definition: DefinitionPane { details.definition }
    private var height: NSLayoutConstraint!
+   /// True while the panel moves itself, so a move the user made can be
+   /// told apart.
+   private(set) var movesItself = false
 
    init() {
       super.init(
@@ -37,6 +40,8 @@ final class LauncherPanel: NSPanel {
       isOpaque = false
       backgroundColor = .clear
       hasShadow = true
+      // Dragged by anything but the query field.
+      isMovableByWindowBackground = true
 
       let font = NSFont.systemFont(ofSize: 19, weight: .light)
       query.isBordered = false
@@ -77,8 +82,13 @@ final class LauncherPanel: NSPanel {
 
    override var canBecomeKey: Bool { true }
 
+   func move(topLeft: NSPoint) {
+      movingItself { setFrameTopLeftPoint(topLeft) }
+   }
+
    /// Shows the prefix legend and the definition pane or not, and fits the
-   /// panel to what shows. The top edge stays where it is.
+   /// panel to what shows. The top edge stays where it is, unless the panel
+   /// would leave the bottom of the screen; then it moves up.
    func fit(legend: Bool, definition: Bool) {
       details.showsLegend = legend
       details.showsDefinition = definition
@@ -89,8 +99,17 @@ final class LauncherPanel: NSPanel {
       var next = frame
       next.origin.y += next.height - target
       next.size.height = target
-      setFrame(next, display: true)
+      if let visible = screen?.visibleFrame, next.minY < visible.minY {
+         next.origin.y = min(visible.minY, visible.maxY - target)
+      }
+      movingItself { setFrame(next, display: true) }
       invalidateShadow()
+   }
+
+   private func movingItself(_ change: () -> Void) {
+      movesItself = true
+      change()
+      movesItself = false
    }
 
    /// Tiling window managers such as AeroSpace leave system floating

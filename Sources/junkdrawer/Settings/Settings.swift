@@ -11,10 +11,20 @@ final class Settings {
    var bookmarksFile = stored(.bookmarksFile, default: String?.none) { didSet { store(bookmarksFile, as: .bookmarksFile) } }
    /// Folders searched for apps besides the usual ones, as paths.
    var appFolders = stored(.appFolders, default: [String]()) { didSet { store(appFolders, as: .appFolders) } }
+   /// Where the panel was dragged to, by display UUID. A screen without an
+   /// entry shows it centred.
+   var positions = stored(.positions, default: [String: Spot]()) { didSet { store(positions, as: .positions) } }
 
    var bookmarksURL: URL {
       bookmarksFile.map { URL(filePath: $0) } ?? BookmarksSource.defaultFile
    }
+}
+
+/// The panel's top-left corner, in points from the top-left corner of the
+/// screen's visible frame, downward.
+struct Spot: Hashable, Codable {
+   var x: Double
+   var y: Double
 }
 
 enum Appearance: String, Codable, CaseIterable {
@@ -35,6 +45,7 @@ private enum Key: String {
    case appearance = "Appearance"
    case bookmarksFile = "BookmarksFile"
    case appFolders = "AppFolders"
+   case positions = "Positions"
 }
 
 private func stored<Value: Decodable>(_ key: Key, default value: Value) -> Value {

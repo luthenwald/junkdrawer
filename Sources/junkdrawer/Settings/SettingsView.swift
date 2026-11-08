@@ -18,6 +18,11 @@ struct SettingsView: View {
                   Restore(isShown: settings.shortcut != .toggle) { _ = shortcut.change(to: .toggle) }
                }
                Toggle("Launch at login", isOn: Binding(get: { loginItem.isEnabled }, set: loginItem.set))
+               LabeledContent("Panel position") {
+                  Button("Reset") { settings.positions = [:] }
+                     .disabled(settings.positions.isEmpty)
+                     .help("Show the panel centred near the top again")
+               }
             }
             Section {
                ForEach(settings.appFolders, id: \.self) { folder in

@@ -15,6 +15,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    var perform: (Item, Action) -> Void = { _, _ in }
    private let panel = LauncherPanel()
    private let usage: UsageStore
+   private let settings: Settings
    private let dictionary = DictionarySource()
    /// The screen the panel last showed on, for the confirmation line.
    private(set) var screen: NSScreen?
@@ -38,8 +39,9 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    private enum WarmUp { case pending, running, done }
    private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
 
-   init(usage: UsageStore) {
+   init(usage: UsageStore, settings: Settings) {
       self.usage = usage
+      self.settings = settings
       super.init()
       panel.delegate = self
       panel.query.delegate = self
@@ -96,6 +98,19 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    func windowDidResignKey(_ notification: Notification) {
       hide()
+   }
+
+   /// Remembers where the user dragged the panel, for that screen. Back at
+   /// the default spot, within 2 pt, it forgets it.
+   func windowDidMove(_ notification: Notification) {
+      guard !panel.movesItself, warmUp != .running, let screen = panel.screen, let key = screen.displayKey else { return }
+      self.screen = screen
+      let visible = screen.visibleFrame
+      let spot = Spot(x: panel.frame.minX - visible.minX, y: visible.maxY - panel.frame.maxY)
+      let standard = Self.defaultTopLeft(on: visible)
+      let isDefault = abs(panel.frame.minX - standard.x) <= 2 && abs(panel.frame.maxY - standard.y) <= 2
+      let stored = isDefault ? nil : spot
+      if settings.positions[key] != stored { settings.positions[key] = stored }
    }
 
    func controlTextDidChange(_ notification: Notification) {
@@ -240,14 +255,34 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.fit(legend: raw.isEmpty, definition: definition != nil)
    }
 
-   /// Centred on the screen under the pointer, near the top.
+   /// On the screen under the pointer, where it was dragged to on that
+   /// screen, kept so the whole panel is on screen, or else centred near
+   /// the top.
    private func place() {
       let mouse = NSEvent.mouseLocation
       guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main else { return }
       self.screen = screen
       let visible = screen.visibleFrame
-      let size = panel.frame.size
-      let top = visible.maxY - Self.topOffset * visible.height
-      panel.setFrameOrigin(NSPoint(x: (visible.midX - size.width / 2).rounded(), y: (top - size.height).rounded()))
+      let topLeft = screen.displayKey.flatMap { settings.positions[$0] }.map { spot in
+         NSPoint(
+            x: min(max(visible.minX + spot.x, visible.minX), visible.maxX - LauncherPanel.width).rounded(),
+            y: min(max(visible.maxY - spot.y, visible.minY + panel.frame.height), visible.maxY).rounded()
+         )
+      }
+      panel.move(topLeft: topLeft ?? Self.defaultTopLeft(on: visible))
+   }
+
+   private static func defaultTopLeft(on visible: NSRect) -> NSPoint {
+      NSPoint(x: (visible.midX - LauncherPanel.width / 2).rounded(), y: (visible.maxY - topOffset * visible.height).rounded())
+   }
+}
+
+extension NSScreen {
+   /// The display's UUID, which stays the same across restarts and
+   /// rearrangements.
+   var displayKey: String? {
+      guard let number = deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+            let uuid = CGDisplayCreateUUIDFromDisplayID(number.uint32Value)?.takeRetainedValue() else { return nil }
+      return CFUUIDCreateString(nil, uuid) as String
    }
 }
