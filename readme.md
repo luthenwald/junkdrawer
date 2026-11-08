@@ -4,7 +4,7 @@ A minimal, keyboard-only launcher for macOS.
 
 ## What it does
 
-- Launches at login and stays out of the way until summoned with `⌃⇧Space`.
+- Launches at login and stays out of the way until summoned with `⌘Space`.
 - Opens apps, and bookmarks from a plain text file in the default browser.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
@@ -15,11 +15,13 @@ A minimal, keyboard-only launcher for macOS.
 
 | Shortcut | Action |
 | --- | --- |
-| `⌃⇧Space` | Show or hide the launcher |
+| `⌘Space` | Show or hide the launcher |
 | `↑` `↓` / `⌃N` `⌃P` | Move the selection |
 | `↵` | Open, insert, or look up |
 | `⌘↵` | Reveal, copy the URL, copy the command or codepoint, copy the definition |
 | `Esc` | Clear the query, then hide |
+
+`⌘Space` is Spotlight's shortcut too, so turn that off in System Settings, Keyboard, Keyboard Shortcuts, Spotlight. While Spotlight holds it, junkdrawer listens for `⌃⇧Space` instead.
 
 ## Inserting symbols
 
