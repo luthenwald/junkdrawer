@@ -5,6 +5,7 @@ import Observation
 /// strings. Every change is saved at once.
 @MainActor @Observable
 final class Settings {
+   var shortcut = stored(.shortcut, default: Shortcut.toggle) { didSet { store(shortcut, as: .shortcut) } }
    var appearance = stored(.appearance, default: Appearance.system) { didSet { store(appearance, as: .appearance) } }
 }
 
@@ -22,6 +23,7 @@ enum Appearance: String, Codable, CaseIterable {
 }
 
 private enum Key: String {
+   case shortcut = "Shortcut"
    case appearance = "Appearance"
 }
 

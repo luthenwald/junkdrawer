@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
    private var settingsWindow: SettingsWindow?
    private var panel: PanelController?
    private var library: Library?
-   private var hotKey: HotKey?
+   private var shortcut: GlobalShortcut?
    private var termination: (any DispatchSourceSignal)?
 
    func applicationDidFinishLaunching(_ notification: Notification) {
@@ -29,7 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
       let panel = PanelController(usage: UsageStore())
       let library = Library { index, icons in panel.update(index: index, icons: icons) }
-      let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem)
+      let shortcut = GlobalShortcut(settings: settings) { panel.toggle() }
+      let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem, shortcut: shortcut)
       let effects = Effects(reload: { library.reload() }, openSettings: { settingsWindow.show() }, bookmarksFile: library.bookmarksFile)
       let confirmation = Confirmation()
       panel.perform = { [unowned panel] item, action in
@@ -39,29 +40,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       self.library = library
       self.settingsWindow = settingsWindow
       track { [settings] in NSApp.appearance = settings.appearance.nsAppearance }
-      let hotKey = HotKey { panel.toggle() }
-      register(hotKey)
       self.panel = panel
-      self.hotKey = hotKey
+      self.shortcut = shortcut
       loginItem.registerOnFirstLaunch()
       Logger.app.notice("login item \(self.loginItem.isEnabled ? "enabled" : "not enabled", privacy: .public)")
-   }
-
-   /// ⌘Space, or ⌃⇧Space when ⌘Space is taken, as it is while Spotlight's
-   /// shortcut is on.
-   private func register(_ hotKey: HotKey) {
-      do {
-         try hotKey.register(.toggle)
-         Logger.app.notice("listening for Command-Space")
-      } catch {
-         Logger.app.error("registering Command-Space failed with status \(error.status, privacy: .public); is Spotlight's shortcut on?")
-         do {
-            try hotKey.register(.fallback)
-            Logger.app.notice("listening for Control-Shift-Space instead")
-         } catch {
-            Logger.app.error("registering Control-Shift-Space failed with status \(error.status, privacy: .public)")
-         }
-      }
    }
 
    /// Opening the app again while it runs shows the panel, in case the

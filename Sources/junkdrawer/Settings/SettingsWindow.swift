@@ -10,9 +10,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
    private let window: Window
    private let loginItem: LoginItem
 
-   init(settings: Settings, loginItem: LoginItem) {
+   init(settings: Settings, loginItem: LoginItem, shortcut: GlobalShortcut) {
       self.loginItem = loginItem
-      let hosting = NSHostingController(rootView: SettingsView(settings: settings, loginItem: loginItem))
+      let hosting = NSHostingController(rootView: SettingsView(settings: settings, loginItem: loginItem, shortcut: shortcut))
       hosting.sizingOptions = .preferredContentSize
       window = Window(contentViewController: hosting)
       window.title = "Junkdrawer Settings"
