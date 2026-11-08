@@ -13,6 +13,9 @@ final class ResultList: NSView {
    /// The stroke icon for bookmarks, tinted like secondary text.
    private static let link = NSImage(systemSymbolName: "link", accessibilityDescription: nil)?
       .withSymbolConfiguration(.init(pointSize: 15, weight: .light))
+   /// The stroke icon for dictionary entries and the Define row.
+   private static let book = NSImage(systemSymbolName: "book", accessibilityDescription: nil)?
+      .withSymbolConfiguration(.init(pointSize: 15, weight: .light))
 
    override var isFlipped: Bool { true }
 
@@ -44,12 +47,14 @@ final class ResultList: NSView {
       needsLayout = true
    }
 
-   /// The gray icon for apps, the link for bookmarks, nothing for commands.
+   /// The gray icon for apps, the link for bookmarks, the book for the
+   /// dictionary, nothing for commands.
    private static func icon(for item: Item, in icons: [String: CGImage]) -> NSImage? {
       switch item.kind {
       case .app: icons[item.id].map { NSImage(cgImage: $0, size: NSSize(width: 28, height: 28)) }
       case .bookmark: link
-      case .latex, .unicode, .dictionary, .command: nil
+      case .dictionary: book
+      case .latex, .unicode, .command: nil
       }
    }
 

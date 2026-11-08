@@ -14,11 +14,19 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    var perform: (Item, Action) -> Void = { _, _ in }
    private let panel = LauncherPanel()
    private let usage: UsageStore
+   private let dictionary = DictionarySource()
    /// The screen the panel last showed on, for the confirmation line.
    private(set) var screen: NSScreen?
    private var index = Index()
    private var icons: [String: CGImage] = [:]
    private var rows: [Row] = []
+   /// The dictionary entries of the rows, by item id, for the pane.
+   private var definitions: [String: Definition] = [:]
+   /// Shown in place of rows when there are none.
+   private var emptyText = ""
+   /// True while the rows are a dictionary answer, which stays until the
+   /// next one arrives.
+   private var showsLookup = false
    private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
 
    init(usage: UsageStore) {
@@ -89,40 +97,79 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    }
 
    /// Records the pick, then hides, so an app that opens comes to the front
-   /// over nothing. Dictionary look-ups and quitting are not picks.
+   /// over nothing. Dictionary look-ups and quitting are not picks. The
+   /// Define row sets the query instead and keeps the panel open.
    private func run(_ key: KeyPath<Item, Action>) {
       guard rows.indices.contains(selection.index) else { return }
       let item = rows[selection.index].item
       let action = item[keyPath: key]
+      if case .setQuery(let text) = action {
+         setQuery(text)
+         return
+      }
       if item.kind != .dictionary, action != .command(.quit) { usage.record(item) }
       hide()
       perform(item, action)
    }
 
    private func clear() {
-      panel.query.stringValue = ""
+      setQuery("")
+   }
+
+   /// With the caret at the end, as if typed.
+   private func setQuery(_ text: String) {
+      panel.query.stringValue = text
+      panel.query.currentEditor()?.selectedRange = NSRange(location: (text as NSString).length, length: 0)
       refresh(keeping: nil)
    }
 
-   /// Ranks the query again and selects `id`, or the first row.
+   /// Ranks the query again and selects `id`, or the first row. In the
+   /// dictionary mode the rows come once the look-up answers; until then
+   /// the previous ones stay, so typing does not flicker.
    private func refresh(keeping id: String?) {
-      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index, usage: usage.usage, now: Date())
+      let raw = panel.query.stringValue
+      let query = Query(raw)
+      guard query.mode == .dictionary else {
+         dictionary.cancel()
+         show(JunkdrawerCore.rows(for: query, in: index, usage: usage.usage, now: Date()), [:], empty: raw.isEmpty ? "No recent picks" : "No matches", keeping: id)
+         return
+      }
+      guard !query.text.isEmpty else {
+         dictionary.cancel()
+         show([], [:], empty: "Type a word to look it up", keeping: nil)
+         return
+      }
+      if !showsLookup { show([], [:], empty: "", keeping: nil) }
+      dictionary.lookUp(query.text) { [weak self] found in
+         guard let self, Query(panel.query.stringValue) == query else { return }
+         let result = dictionaryRows(query.text, found)
+         show(result.rows, result.definitions, empty: "No entry for “\(query.text)”", keeping: id, lookup: true)
+      }
+   }
+
+   private func show(_ rows: [Row], _ definitions: [String: Definition], empty: String, keeping id: String?, lookup: Bool = false) {
+      showsLookup = lookup
+      self.rows = rows
+      self.definitions = definitions
+      emptyText = empty
       let position = id.flatMap { id in rows.firstIndex { $0.item.id == id } } ?? 0
       selection = Selection(count: rows.count, visible: LauncherPanel.visibleRows).moved(by: position)
       render()
    }
 
+   /// The ⌘↵ hint is left out when it does the same as ↵.
    private func render() {
       let raw = panel.query.stringValue
       let window = selection.window
-      panel.list.show(
-         rows[window], selected: selection.index - window.lowerBound, icons: icons,
-         empty: raw.isEmpty ? "No recent picks" : "No matches"
-      )
+      panel.list.show(rows[window], selected: selection.index - window.lowerBound, icons: icons, empty: emptyText)
       let current = rows.indices.contains(selection.index) ? rows[selection.index].item : nil
-      let hints: [(key: String, action: String)] = current.map { [("↵", $0.primaryHint), ("⌘↵", $0.secondaryHint)] } ?? []
+      let hints: [(key: String, action: String)] = current.map { item in
+         [("↵", item.primaryHint)] + (item.secondary == item.primary ? [] : [("⌘↵", item.secondaryHint)])
+      } ?? []
       panel.footer.show(mode: Query(raw).label, counter: selection.counter, hints: hints + [("esc", raw.isEmpty ? "close" : "clear")])
-      panel.fit(legend: raw.isEmpty)
+      let definition = current.flatMap { definitions[$0.id] }
+      if let definition { panel.definition.show(definition) }
+      panel.fit(legend: raw.isEmpty, definition: definition != nil)
    }
 
    /// Centred on the screen under the pointer, near the top.

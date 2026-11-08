@@ -16,6 +16,7 @@ final class LauncherPanel: NSPanel {
    private let details = Details()
    var list: ResultList { details.list }
    var footer: Footer { details.footer }
+   var definition: DefinitionPane { details.definition }
    private var height: NSLayoutConstraint!
 
    init() {
@@ -74,10 +75,11 @@ final class LauncherPanel: NSPanel {
 
    override var canBecomeKey: Bool { true }
 
-   /// Shows the prefix legend or not, and fits the panel to what shows.
-   /// The top edge stays where it is.
-   func fit(legend: Bool) {
+   /// Shows the prefix legend and the definition pane or not, and fits the
+   /// panel to what shows. The top edge stays where it is.
+   func fit(legend: Bool, definition: Bool) {
       details.showsLegend = legend
+      details.showsDefinition = definition
       details.needsLayout = true
       let target = Self.queryHeight + details.height
       guard target != frame.height else { return }
@@ -152,17 +154,25 @@ private final class Surface: NSView {
    }
 }
 
-/// Under the query field: a hairline, the list, then for an empty query a
-/// hairline and the prefix legend, then a hairline and the footer.
+/// Under the query field: a hairline, the list, then for a dictionary
+/// entry a hairline and its definition, or for an empty query a hairline
+/// and the prefix legend, then a hairline and the footer.
 private final class Details: NSView {
    let list = ResultList()
    let footer = Footer()
+   let definition = DefinitionPane()
    private let legend = Legend()
-   private let rules = [Rule(), Rule(), Rule()]
+   private let rules = [Rule(), Rule(), Rule(), Rule()]
    var showsLegend = false {
       didSet {
          legend.isHidden = !showsLegend
          rules[2].isHidden = !showsLegend
+      }
+   }
+   var showsDefinition = false {
+      didSet {
+         definition.isHidden = !showsDefinition
+         rules[3].isHidden = !showsDefinition
       }
    }
 
@@ -171,9 +181,8 @@ private final class Details: NSView {
    init() {
       super.init(frame: .zero)
       rules.forEach { $0.wantsLayer = true }
-      [rules[0], list, rules[1], footer, rules[2], legend].forEach(addSubview)
-      legend.isHidden = true
-      rules[2].isHidden = true
+      [rules[0], list, rules[1], footer, rules[2], legend, rules[3], definition].forEach(addSubview)
+      [legend, rules[2], definition, rules[3]].forEach { $0.isHidden = true }
    }
 
    required init?(coder: NSCoder) {
@@ -181,7 +190,9 @@ private final class Details: NSView {
    }
 
    var height: CGFloat {
-      list.height + Footer.height + 2 * Rule.width + (showsLegend ? Legend.height + Rule.width : 0)
+      list.height + Footer.height + 2 * Rule.width
+         + (showsDefinition ? definition.height + Rule.width : 0)
+         + (showsLegend ? Legend.height + Rule.width : 0)
    }
 
    override func layout() {
@@ -190,6 +201,11 @@ private final class Details: NSView {
       rules[0].frame = NSRect(x: 0, y: 0, width: width, height: Rule.width)
       list.frame = NSRect(x: 0, y: rules[0].frame.maxY, width: width, height: list.height)
       var y = list.frame.maxY
+      if showsDefinition {
+         rules[3].frame = NSRect(x: 0, y: y, width: width, height: Rule.width)
+         definition.frame = NSRect(x: 0, y: rules[3].frame.maxY, width: width, height: definition.height)
+         y = definition.frame.maxY
+      }
       if showsLegend {
          rules[2].frame = NSRect(x: 0, y: y, width: width, height: Rule.width)
          legend.frame = NSRect(x: 0, y: rules[2].frame.maxY, width: width, height: Legend.height)

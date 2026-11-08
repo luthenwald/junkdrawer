@@ -47,9 +47,16 @@ struct Effects {
          showLogs()
       case .command(.quit):
          NSApp.terminate(nil)
-      case .openDefinition, .setQuery:
-         // The dictionary comes in a later milestone.
-         Logger.app.notice("not handled yet: \(String(describing: action), privacy: .public)")
+      case .openDefinition(let word):
+         guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+               let url = URL(string: "dict://" + encoded), NSWorkspace.shared.open(url)
+         else {
+            Logger.app.error("opening \(word, privacy: .public) in Dictionary failed")
+            break
+         }
+      case .setQuery:
+         // The panel sets its own query and stays open.
+         Logger.app.error("setQuery reached the effects: \(String(describing: action), privacy: .public)")
       }
       return .done
    }
