@@ -9,20 +9,31 @@ public struct Index: Sendable {
    }
 }
 
-/// The rows for a query, best first. Only the plain mode searches so far;
-/// the recent list, symbols and the dictionary come with later milestones.
-public func rows(for query: Query, in index: Index) -> [Row] {
+/// How many recent picks an empty query lists.
+public let recentLimit = 12
+
+/// The rows for a query, best first. An empty query lists recent picks;
+/// symbols and the dictionary come with later milestones.
+public func rows(for query: Query, in index: Index, usage: Usage, now: Date) -> [Row] {
    switch query.mode {
-   case .plain where !query.text.isEmpty:
-      plainRows(query.text, in: index.items)
-   case .plain, .latex, .unicode, .dictionary:
+   case .plain where query.text.isEmpty:
+      recentRows(in: index.items, usage: usage)
+   case .plain:
+      plainRows(query.text, in: index.items, usage: usage, now: now)
+   case .latex, .unicode, .dictionary:
       []
    }
 }
 
-/// The better of the title match and 0.6 times the keywords match, and apps
-/// a little ahead of bookmarks. Ties sort by title.
-private func plainRows(_ text: String, in items: [Item]) -> [Row] {
+/// The recent picks that are still in the index, the latest first.
+private func recentRows(in items: [Item], usage: Usage) -> [Row] {
+   let byID = Dictionary(items.map { ($0.id, $0) }) { first, _ in first }
+   return usage.recent(limit: recentLimit).compactMap { byID[$0] }.map { Row(item: $0, matched: [], score: 0) }
+}
+
+/// The better of the title match and 0.6 times the keywords match, apps a
+/// little ahead of bookmarks, plus the frecency bonus. Ties sort by title.
+private func plainRows(_ text: String, in items: [Item], usage: Usage, now: Date) -> [Row] {
    items
       .compactMap { item -> Row? in
          let title = match(text, in: item.title)
@@ -33,7 +44,8 @@ private func plainRows(_ text: String, in items: [Item]) -> [Row] {
          case let (nil, keywords?): (keywords, [])
          case (nil, nil): nil
          }
-         return best.map { Row(item: item, matched: $0.indices, score: $0.score + (item.kind == .app ? 5 : 0)) }
+         let extra = (item.kind == .app ? 5 : 0) + usage.bonus(for: item.id, now: now)
+         return best.map { Row(item: item, matched: $0.indices, score: $0.score + extra) }
       }
       .sorted { a, b in
          a.score != b.score ? a.score > b.score : a.item.title.localizedStandardCompare(b.item.title) == .orderedAscending

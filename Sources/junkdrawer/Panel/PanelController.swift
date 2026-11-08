@@ -99,7 +99,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// Ranks the query again and selects `id`, or the first row.
    private func refresh(keeping id: String?) {
-      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index)
+      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index, usage: Usage(), now: Date())
       let position = id.flatMap { id in rows.firstIndex { $0.item.id == id } } ?? 0
       selection = Selection(count: rows.count, visible: LauncherPanel.visibleRows).moved(by: position)
       render()
@@ -111,7 +111,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.list.show(rows[window], selected: selection.index - window.lowerBound, icons: icons)
       let current = rows.indices.contains(selection.index) ? rows[selection.index].item : nil
       let hints: [(key: String, action: String)] = current.map { [("↵", $0.primaryHint), ("⌘↵", $0.secondaryHint)] } ?? []
-      panel.footer.show(mode: Query(raw).mode.label, counter: selection.counter, hints: hints + [("esc", "clear")])
+      panel.footer.show(mode: Query(raw).label, counter: selection.counter, hints: hints + [("esc", "clear")])
       panel.fit(expanded: !raw.isEmpty)
    }
 
