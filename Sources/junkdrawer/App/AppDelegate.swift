@@ -20,13 +20,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
          return
       }
       quitOnTermination()
+      // So Show logs always has the current run to show.
+      Logger.app.notice("started \(Bundle.main.bundlePath, privacy: .public)")
       // No Dock icon and no visible menu bar, also when run as a bare binary.
       NSApp.setActivationPolicy(.accessory)
 
       let panel = PanelController(usage: UsageStore())
       let library = Library { items, icons in panel.update(items: items, icons: icons) }
       let effects = Effects(reload: { library.reload() }, bookmarksFile: library.bookmarksFile)
-      panel.perform = { _, action in effects.perform(action) }
+      let confirmation = Confirmation()
+      panel.perform = { [unowned panel] item, action in
+         effects.perform(action)
+         if let text = item.confirmation(for: action) { confirmation.show(text, on: panel.screen) }
+      }
       self.library = library
       let hotKey = HotKey { panel.toggle() }
       do {

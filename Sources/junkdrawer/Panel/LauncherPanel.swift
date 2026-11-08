@@ -55,7 +55,6 @@ final class LauncherPanel: NSPanel {
          view.translatesAutoresizingMaskIntoConstraints = false
          surface.addSubview(view)
       }
-      details.isHidden = true
       height = surface.heightAnchor.constraint(equalToConstant: Self.queryHeight)
       // Otherwise the window shrinks to the placeholder's width.
       NSLayoutConstraint.activate([
@@ -75,12 +74,12 @@ final class LauncherPanel: NSPanel {
 
    override var canBecomeKey: Bool { true }
 
-   /// Shows the list and footer under the query field, or hides them, and
-   /// fits the panel to what shows. The top edge stays where it is.
-   func fit(expanded: Bool) {
-      details.isHidden = !expanded
+   /// Shows the prefix legend or not, and fits the panel to what shows.
+   /// The top edge stays where it is.
+   func fit(legend: Bool) {
+      details.showsLegend = legend
       details.needsLayout = true
-      let target = Self.queryHeight + (expanded ? details.height : 0)
+      let target = Self.queryHeight + details.height
       guard target != frame.height else { return }
       height.constant = target
       var next = frame
@@ -153,18 +152,28 @@ private final class Surface: NSView {
    }
 }
 
-/// Under the query field: a hairline, the list, a hairline and the footer.
+/// Under the query field: a hairline, the list, then for an empty query a
+/// hairline and the prefix legend, then a hairline and the footer.
 private final class Details: NSView {
    let list = ResultList()
    let footer = Footer()
-   private let rules = [Rule(), Rule()]
+   private let legend = Legend()
+   private let rules = [Rule(), Rule(), Rule()]
+   var showsLegend = false {
+      didSet {
+         legend.isHidden = !showsLegend
+         rules[2].isHidden = !showsLegend
+      }
+   }
 
    override var isFlipped: Bool { true }
 
    init() {
       super.init(frame: .zero)
       rules.forEach { $0.wantsLayer = true }
-      [rules[0], list, rules[1], footer].forEach(addSubview)
+      [rules[0], list, rules[1], footer, rules[2], legend].forEach(addSubview)
+      legend.isHidden = true
+      rules[2].isHidden = true
    }
 
    required init?(coder: NSCoder) {
@@ -172,7 +181,7 @@ private final class Details: NSView {
    }
 
    var height: CGFloat {
-      list.height + Footer.height + 2 * Rule.width
+      list.height + Footer.height + 2 * Rule.width + (showsLegend ? Legend.height + Rule.width : 0)
    }
 
    override func layout() {
@@ -180,7 +189,13 @@ private final class Details: NSView {
       let width = bounds.width
       rules[0].frame = NSRect(x: 0, y: 0, width: width, height: Rule.width)
       list.frame = NSRect(x: 0, y: rules[0].frame.maxY, width: width, height: list.height)
-      rules[1].frame = NSRect(x: 0, y: list.frame.maxY, width: width, height: Rule.width)
+      var y = list.frame.maxY
+      if showsLegend {
+         rules[2].frame = NSRect(x: 0, y: y, width: width, height: Rule.width)
+         legend.frame = NSRect(x: 0, y: rules[2].frame.maxY, width: width, height: Legend.height)
+         y = legend.frame.maxY
+      }
+      rules[1].frame = NSRect(x: 0, y: y, width: width, height: Rule.width)
       footer.frame = NSRect(x: 0, y: rules[1].frame.maxY, width: width, height: Footer.height)
    }
 }
@@ -220,5 +235,35 @@ private final class QueryCell: NSTextFieldCell {
          editor.selectedTextAttributes = [.backgroundColor: NSColor.line]
       }
       return editor
+   }
+}
+
+/// The four prefixes, under the recent list.
+private final class Legend: NSView {
+   static let height: CGFloat = 36
+   private static let inset: CGFloat = 18
+   private static let mono = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+   private static let entries = [("\\", "latex"), (":", "unicode"), ("?", "dictionary"), ("", "no prefix  apps and bookmarks")]
+
+   private let label = NSTextField.line()
+
+   init() {
+      super.init(frame: .zero)
+      label.attributedStringValue = .spaced(Self.entries.map { key, word in
+         let text = NSMutableAttributedString(attributedString: .small(key, .text, font: Self.mono))
+         text.append(.small(key.isEmpty ? word : "  " + word, .secondary))
+         return text
+      }, by: 22)
+      addSubview(label)
+   }
+
+   required init?(coder: NSCoder) {
+      fatalError("not used")
+   }
+
+   override func layout() {
+      super.layout()
+      let size = label.drawnSize
+      label.frame = NSRect(x: Self.inset, y: (bounds.height - size.height) / 2, width: size.width, height: size.height)
    }
 }

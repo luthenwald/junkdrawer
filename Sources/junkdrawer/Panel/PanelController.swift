@@ -14,6 +14,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    var perform: (Item, Action) -> Void = { _, _ in }
    private let panel = LauncherPanel()
    private let usage: UsageStore
+   /// The screen the panel last showed on, for the confirmation line.
+   private(set) var screen: NSScreen?
    private var index = Index()
    private var icons: [String: CGImage] = [:]
    private var rows: [Row] = []
@@ -113,17 +115,21 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    private func render() {
       let raw = panel.query.stringValue
       let window = selection.window
-      panel.list.show(rows[window], selected: selection.index - window.lowerBound, icons: icons)
+      panel.list.show(
+         rows[window], selected: selection.index - window.lowerBound, icons: icons,
+         empty: raw.isEmpty ? "No recent picks" : "No matches"
+      )
       let current = rows.indices.contains(selection.index) ? rows[selection.index].item : nil
       let hints: [(key: String, action: String)] = current.map { [("↵", $0.primaryHint), ("⌘↵", $0.secondaryHint)] } ?? []
-      panel.footer.show(mode: Query(raw).label, counter: selection.counter, hints: hints + [("esc", "clear")])
-      panel.fit(expanded: !raw.isEmpty)
+      panel.footer.show(mode: Query(raw).label, counter: selection.counter, hints: hints + [("esc", raw.isEmpty ? "close" : "clear")])
+      panel.fit(legend: raw.isEmpty)
    }
 
    /// Centred on the screen under the pointer, near the top.
    private func place() {
       let mouse = NSEvent.mouseLocation
       guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main else { return }
+      self.screen = screen
       let visible = screen.visibleFrame
       let size = panel.frame.size
       let top = visible.maxY - Self.topOffset * visible.height

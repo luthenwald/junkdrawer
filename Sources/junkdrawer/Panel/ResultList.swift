@@ -10,15 +10,14 @@ final class ResultList: NSView {
    private let rowViews = (0..<LauncherPanel.visibleRows).map { _ in RowView() }
    private let empty = NSTextField.line()
    private var shown = 0
+   /// The stroke icon for bookmarks, tinted like secondary text.
+   private static let link = NSImage(systemSymbolName: "link", accessibilityDescription: nil)?
+      .withSymbolConfiguration(.init(pointSize: 15, weight: .light))
 
    override var isFlipped: Bool { true }
 
    init() {
       super.init(frame: .zero)
-      empty.attributedStringValue = NSAttributedString(
-         string: "No matches",
-         attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.secondary]
-      )
       (rowViews + [empty]).forEach(addSubview)
    }
 
@@ -26,20 +25,32 @@ final class ResultList: NSView {
       fatalError("not used")
    }
 
-   /// With "No matches" in place of rows when there are none.
+   /// With the empty text in place of rows when there are none.
    var height: CGFloat {
       2 * Self.padding + Self.rowHeight * CGFloat(max(shown, 1))
    }
 
-   func show(_ rows: ArraySlice<Row>, selected: Int, icons: [String: CGImage]) {
+   func show(_ rows: ArraySlice<Row>, selected: Int, icons: [String: CGImage], empty text: String) {
       shown = rows.count
       for (position, view) in rowViews.enumerated() {
          let row = rows.dropFirst(position).first
          view.isHidden = row == nil
-         if let row { view.show(row, selected: position == selected, icon: icons[row.item.id]) }
+         if let row { view.show(row, selected: position == selected, icon: Self.icon(for: row.item, in: icons)) }
       }
+      empty.attributedStringValue = NSAttributedString(
+         string: text, attributes: [.font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.secondary]
+      )
       empty.isHidden = !rows.isEmpty
       needsLayout = true
+   }
+
+   /// The gray icon for apps, the link for bookmarks, nothing for commands.
+   private static func icon(for item: Item, in icons: [String: CGImage]) -> NSImage? {
+      switch item.kind {
+      case .app: icons[item.id].map { NSImage(cgImage: $0, size: NSSize(width: 28, height: 28)) }
+      case .bookmark: link
+      case .latex, .unicode, .dictionary, .command: nil
+      }
    }
 
    override func layout() {
@@ -74,7 +85,7 @@ private final class RowView: NSView {
       wantsLayer = true
       layer?.cornerRadius = 8
       layer?.cornerCurve = .continuous
-      icon.imageScaling = .scaleProportionallyUpOrDown
+      icon.contentTintColor = .secondary
       trailing.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
       trailing.textColor = .secondary
       [icon, label, trailing].forEach(addSubview)
@@ -84,10 +95,13 @@ private final class RowView: NSView {
       fatalError("not used")
    }
 
-   func show(_ row: Row, selected: Bool, icon image: CGImage?) {
+   /// A template image, such as a symbol, keeps its size and takes the
+   /// secondary tint; an app icon fills the cell.
+   func show(_ row: Row, selected: Bool, icon image: NSImage?) {
       isSelected = selected
       needsDisplay = true
-      icon.image = image.map { NSImage(cgImage: $0, size: NSSize(width: Self.cell, height: Self.cell)) }
+      icon.imageScaling = image?.isTemplate == true ? .scaleNone : .scaleProportionallyUpOrDown
+      icon.image = image
       label.attributedStringValue = Self.title(row)
       trailing.stringValue = row.item.trailing
       needsLayout = true
