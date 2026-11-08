@@ -30,13 +30,28 @@ public enum Action: Hashable, Sendable {
    case command(Command)
 }
 
+/// Where an item comes from, which decides its left cell and small
+/// ranking differences.
+public enum Kind: Hashable, Sendable {
+   case app
+   case bookmark
+   case latex
+   case unicode
+   case dictionary
+   case command
+}
+
 /// One thing the list can show.
 public struct Item: Identifiable, Hashable, Sendable {
    /// A stable key, such as "app:/Applications/Safari.app" or "tex:alpha",
    /// used for frecency.
    public let id: String
+   public let kind: Kind
    public let title: String
    public let subtitle: String
+   /// Searched besides the title at a lower weight, such as a bookmark's
+   /// host and tags.
+   public let keywords: String
    /// The character shown in the left cell for symbols.
    public let glyph: String?
    /// The right label, such as "amssymb · U+2115".
@@ -44,10 +59,15 @@ public struct Item: Identifiable, Hashable, Sendable {
    public let primary: Action
    public let secondary: Action
 
-   public init(id: String, title: String, subtitle: String, glyph: String? = nil, trailing: String, primary: Action, secondary: Action) {
+   public init(
+      id: String, kind: Kind, title: String, subtitle: String, keywords: String = "",
+      glyph: String? = nil, trailing: String, primary: Action, secondary: Action
+   ) {
       self.id = id
+      self.kind = kind
       self.title = title
       self.subtitle = subtitle
+      self.keywords = keywords
       self.glyph = glyph
       self.trailing = trailing
       self.primary = primary
