@@ -6,6 +6,7 @@ import os
 final class AppDelegate: NSObject, NSApplicationDelegate {
    private let loginItem = LoginItem()
    private var panel: PanelController?
+   private var apps: AppsSource?
    private var hotKey: HotKey?
    private var termination: (any DispatchSourceSignal)?
 
@@ -22,7 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       // No Dock icon and no visible menu bar, also when run as a bare binary.
       NSApp.setActivationPolicy(.accessory)
 
-      let panel = PanelController()
+      let panel = PanelController(perform: Effects.perform)
+      apps = AppsSource { items, icons in panel.update(items: items, icons: icons) }
       let hotKey = HotKey { panel.toggle() }
       do {
          try hotKey.register(.toggle)

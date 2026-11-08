@@ -1,7 +1,9 @@
 import AppKit
+import JunkdrawerCore
 
-/// Shows and hides the panel. It opens empty on the screen under the
-/// pointer and hides on Esc, on focus loss and on the hotkey.
+/// Shows and hides the panel, ranks the query and moves the selection. It
+/// opens empty on the screen under the pointer and hides on Esc, on focus
+/// loss, on the hotkey and after an action.
 @MainActor
 final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// Where the panel's top edge sits, as a share of the visible height
@@ -9,12 +11,28 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    private static let topOffset: CGFloat = 0.22
 
    private let panel = LauncherPanel()
+   private let perform: (Action) -> Void
+   private var index = Index()
+   private var icons: [String: CGImage] = [:]
+   private var rows: [Row] = []
+   private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
 
-   override init() {
+   init(perform: @escaping (Action) -> Void) {
+      self.perform = perform
       super.init()
       panel.delegate = self
       panel.query.delegate = self
       panel.onCancel = { [unowned self] in hide() }
+      panel.onSecondary = { [unowned self] in run(\.secondary) }
+   }
+
+   /// New data from the loaders. The selection stays on the same item when
+   /// it is still there.
+   func update(items: [Item], icons: [String: CGImage]) {
+      index.items = items
+      self.icons = icons
+      let selected = rows.indices.contains(selection.index) ? rows[selection.index].item.id : nil
+      refresh(keeping: selected)
    }
 
    func toggle() {
@@ -33,7 +51,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    func hide() {
       guard panel.isVisible else { return }
       panel.orderOut(nil)
-      panel.query.stringValue = ""
+      clear()
       // Reopening from Finder activates the app; hiding it hands focus back.
       if NSApp.isActive { NSApp.hide(nil) }
    }
@@ -42,12 +60,59 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       hide()
    }
 
-   /// Esc clears the query, and on an empty query hides the panel. The field
-   /// editor would otherwise take it for completion.
+   func controlTextDidChange(_ notification: Notification) {
+      refresh(keeping: nil)
+   }
+
+   /// Keys from the query field. Esc clears the query, and on an empty query
+   /// hides the panel; the field editor would otherwise take it for
+   /// completion. ⌃N and ⌃P arrive as moveDown and moveUp.
    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
-      guard selector == #selector(NSResponder.cancelOperation(_:)) else { return false }
-      if panel.query.stringValue.isEmpty { hide() } else { panel.query.stringValue = "" }
+      switch selector {
+      case #selector(NSResponder.moveDown(_:)): move(by: 1)
+      case #selector(NSResponder.moveUp(_:)): move(by: -1)
+      case #selector(NSResponder.insertNewline(_:)): run(\.primary)
+      case #selector(NSResponder.cancelOperation(_:)):
+         if panel.query.stringValue.isEmpty { hide() } else { clear() }
+      default: return false
+      }
       return true
+   }
+
+   private func move(by step: Int) {
+      selection = selection.moved(by: step)
+      render()
+   }
+
+   /// Hides first, so an app that opens comes to the front over nothing.
+   private func run(_ action: KeyPath<Item, Action>) {
+      guard rows.indices.contains(selection.index) else { return }
+      let item = rows[selection.index].item
+      hide()
+      perform(item[keyPath: action])
+   }
+
+   private func clear() {
+      panel.query.stringValue = ""
+      refresh(keeping: nil)
+   }
+
+   /// Ranks the query again and selects `id`, or the first row.
+   private func refresh(keeping id: String?) {
+      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index)
+      let position = id.flatMap { id in rows.firstIndex { $0.item.id == id } } ?? 0
+      selection = Selection(count: rows.count, visible: LauncherPanel.visibleRows).moved(by: position)
+      render()
+   }
+
+   private func render() {
+      let raw = panel.query.stringValue
+      let window = selection.window
+      panel.list.show(rows[window], selected: selection.index - window.lowerBound, icons: icons)
+      let current = rows.indices.contains(selection.index) ? rows[selection.index].item : nil
+      let hints: [(key: String, action: String)] = current.map { [("↵", $0.primaryHint), ("⌘↵", $0.secondaryHint)] } ?? []
+      panel.footer.show(mode: Query(raw).mode.label, counter: selection.counter, hints: hints + [("esc", "clear")])
+      panel.fit(expanded: !raw.isEmpty)
    }
 
    /// Centred on the screen under the pointer, near the top.
