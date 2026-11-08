@@ -47,9 +47,9 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.query.delegate = self
       panel.onCancel = { [unowned self] in hide() }
       panel.onSecondary = { [unowned self] in run(\.secondary) }
-      panel.onSettings = { [unowned self] in
+      panel.onCommand = { [unowned self] command in
          hide()
-         perform(Command.settings.item, .command(.settings))
+         perform(command.item, .command(command))
       }
    }
 

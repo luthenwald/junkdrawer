@@ -3,7 +3,7 @@ import Carbon.HIToolbox
 import SwiftUI
 
 /// A standard window with the settings. The app has no menu, so the window
-/// closes on ⌘W itself, and closing it hands the focus back to the app
+/// closes on ⌘W and quits the app on ⌘Q itself, and closing it hands the focus back to the app
 /// that was in front.
 @MainActor
 final class SettingsWindow: NSObject, NSWindowDelegate {
@@ -38,11 +38,13 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
    private final class Window: NSWindow {
       override func performKeyEquivalent(with event: NSEvent) -> Bool {
          let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
-         if modifiers == .command, Int(event.keyCode) == kVK_ANSI_W {
-            performClose(nil)
-            return true
+         guard modifiers == .command else { return super.performKeyEquivalent(with: event) }
+         switch Int(event.keyCode) {
+         case kVK_ANSI_W: performClose(nil)
+         case kVK_ANSI_Q: NSApp.terminate(nil)
+         default: return super.performKeyEquivalent(with: event)
          }
-         return super.performKeyEquivalent(with: event)
+         return true
       }
    }
 }

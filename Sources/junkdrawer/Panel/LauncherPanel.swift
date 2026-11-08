@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import JunkdrawerCore
 
 /// A borderless panel that takes key focus without activating the app, so
 /// the app that was in front stays there.
@@ -12,8 +13,8 @@ final class LauncherPanel: NSPanel {
    var onCancel: () -> Void = {}
    /// ⌘↵, which the field editor does not pass on as a command.
    var onSecondary: () -> Void = {}
-   /// ⌘,, as in apps with a menu.
-   var onSettings: () -> Void = {}
+   /// The commands with a key equivalent, as in apps with a menu.
+   var onCommand: (Command) -> Void = { _ in }
    let query = QueryField()
    private let details = Details()
    var list: ResultList { details.list }
@@ -133,14 +134,17 @@ final class LauncherPanel: NSPanel {
       "Z": ([.command, .shift], Selector(("redo:"))),
    ]
 
+   /// By key code, all with ⌘ alone.
+   private static let commands: [Int: Command] = [kVK_ANSI_Comma: .settings, kVK_ANSI_Q: .quit]
+
    override func performKeyEquivalent(with event: NSEvent) -> Bool {
       let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
       if modifiers == .command, [kVK_Return, kVK_ANSI_KeypadEnter].contains(Int(event.keyCode)) {
          onSecondary()
          return true
       }
-      if modifiers == .command, Int(event.keyCode) == kVK_ANSI_Comma {
-         onSettings()
+      if modifiers == .command, let command = Self.commands[Int(event.keyCode)] {
+         onCommand(command)
          return true
       }
       if let key = event.charactersIgnoringModifiers, let edit = Self.editing[key], edit.modifiers == modifiers,
