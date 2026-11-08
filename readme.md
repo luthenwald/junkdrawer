@@ -9,7 +9,8 @@ A minimal, keyboard-only launcher for macOS.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
 - Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
-- Has no menu. Reload data, Edit bookmarks, Show logs and Quit junkdrawer are found and run like apps.
+- Has no menu. Reload data, Edit bookmarks, Show logs, Settings and Quit junkdrawer are found and run like apps.
+- Can be dragged anywhere, and opens there again on that screen.
 
 ## Keyboard
 
@@ -20,8 +21,13 @@ A minimal, keyboard-only launcher for macOS.
 | `↵` | Open, insert, or look up |
 | `⌘↵` | Reveal, copy the URL, copy the command or codepoint, copy the definition |
 | `Esc` | Clear the query, then hide |
+| `⌘,` | Open Settings |
 
-`⌘Space` is Spotlight's shortcut too, so turn that off in System Settings, Keyboard, Keyboard Shortcuts, Spotlight. While Spotlight holds it, junkdrawer listens for `⌃⇧Space` instead.
+`⌘Space` is Spotlight's shortcut too, so turn that off in System Settings, Keyboard, Keyboard Shortcuts, Spotlight. While Spotlight holds it, junkdrawer listens for `⌃⇧Space` instead. You can record another shortcut in Settings.
+
+## Settings
+
+Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position.
 
 ## Inserting symbols
 
@@ -29,7 +35,7 @@ Inserting types the symbol into the app that was in front, which macOS only allo
 
 ## Bookmarks
 
-`~/.config/junkdrawer/bookmarks`, one per line: the URL, the title, then optional `#tags`. Lines starting with `;` are comments. Edit bookmarks creates the file and opens it, and changes show up as soon as you save.
+`~/.config/junkdrawer/bookmarks` unless you choose another file in Settings, one per line: the URL, the title, then optional `#tags`. Lines starting with `;` are comments. Edit bookmarks creates the file and opens it, and changes show up as soon as you save.
 
 ```
 https://codeberg.org Codeberg #git #forge
