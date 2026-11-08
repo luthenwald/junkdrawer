@@ -12,13 +12,11 @@ final class LauncherPanel: NSPanel {
    var onCancel: () -> Void = {}
    /// ⌘↵, which the field editor does not pass on as a command.
    var onSecondary: () -> Void = {}
-   let query = NSTextField()
+   let query = QueryField()
    private let details = Details()
    var list: ResultList { details.list }
    var footer: Footer { details.footer }
    private var height: NSLayoutConstraint!
-   /// Shared by the text fields, with a gray caret and selection.
-   private let fieldEditor = NSTextView()
 
    init() {
       super.init(
@@ -36,10 +34,6 @@ final class LauncherPanel: NSPanel {
       isOpaque = false
       backgroundColor = .clear
       hasShadow = true
-
-      fieldEditor.isFieldEditor = true
-      fieldEditor.insertionPointColor = .text
-      fieldEditor.selectedTextAttributes = [.backgroundColor: NSColor.line]
 
       let font = NSFont.systemFont(ofSize: 19, weight: .light)
       query.isBordered = false
@@ -94,10 +88,6 @@ final class LauncherPanel: NSPanel {
       next.size.height = target
       setFrame(next, display: true)
       invalidateShadow()
-   }
-
-   override func fieldEditor(_ createFlag: Bool, for object: Any?) -> NSText? {
-      object is NSTextField ? fieldEditor : super.fieldEditor(createFlag, for: object)
    }
 
    /// Tiling window managers such as AeroSpace leave system floating
@@ -207,5 +197,28 @@ private final class Rule: NSView {
 
    override func viewDidChangeEffectiveAppearance() {
       needsDisplay = true
+   }
+}
+
+/// The query field, with a gray caret and selection instead of the accent
+/// colour.
+final class QueryField: NSTextField {
+   override class var cellClass: AnyClass? {
+      get { QueryCell.self }
+      set {}
+   }
+}
+
+/// Sets the colours each time editing starts. The cell resets the field
+/// editor's selection colour then, so setting it once on the editor does
+/// not last.
+private final class QueryCell: NSTextFieldCell {
+   override func setUpFieldEditorAttributes(_ text: NSText) -> NSText {
+      let editor = super.setUpFieldEditorAttributes(text)
+      if let editor = editor as? NSTextView {
+         editor.insertionPointColor = .text
+         editor.selectedTextAttributes = [.backgroundColor: NSColor.line]
+      }
+      return editor
    }
 }
