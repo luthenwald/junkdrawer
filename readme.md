@@ -8,6 +8,8 @@ A minimal, keyboard-only launcher for macOS.
 - Opens apps, and bookmarks from a plain text file in the default browser.
 - `\` searches LaTeX commands and `:` Unicode names; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary.
+- Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
+- Has no menu. Reload data, Edit bookmarks, Show logs and Quit junkdrawer are found and run like apps.
 
 ## Keyboard
 
@@ -21,7 +23,7 @@ A minimal, keyboard-only launcher for macOS.
 
 ## Bookmarks
 
-`~/.config/junkdrawer/bookmarks`, one per line: the URL, the title, then optional `#tags`. Lines starting with `;` are comments.
+`~/.config/junkdrawer/bookmarks`, one per line: the URL, the title, then optional `#tags`. Lines starting with `;` are comments. Edit bookmarks creates the file and opens it, and changes show up as soon as you save.
 
 ```
 https://codeberg.org Codeberg #git #forge
