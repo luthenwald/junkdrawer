@@ -36,7 +36,9 @@ cat > "$OUT/Contents/Info.plist" <<EOF
 </plist>
 EOF
 
-if security find-identity -v -p codesigning | grep -q "\"$SIGN_ID\""; then
+# Without -v: a self-signed certificate is untrusted, which codesign accepts but
+# find-identity -v leaves out.
+if security find-identity -p codesigning | grep -q "\"$SIGN_ID\""; then
    codesign --force --sign "$SIGN_ID" "$OUT"
 else
    echo "warning: no code-signing identity \"$SIGN_ID\", signing ad hoc; the Accessibility grant will reset on every build" >&2
