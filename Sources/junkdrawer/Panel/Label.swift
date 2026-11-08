@@ -22,9 +22,7 @@ extension NSAttributedString {
    static func spaced(_ parts: [NSAttributedString], by gap: CGFloat) -> NSAttributedString {
       let text = NSMutableAttributedString()
       for part in parts {
-         if text.length > 0 {
-            text.addAttribute(.kern, value: gap, range: NSRange(location: text.length - 1, length: 1))
-         }
+         if text.length > 0 { text.kernLast(by: gap) }
          text.append(part)
       }
       return text
@@ -34,5 +32,14 @@ extension NSAttributedString {
    /// says otherwise, such as SF Mono or tabular digits.
    static func small(_ string: String, _ color: NSColor, font: NSFont = .systemFont(ofSize: 12)) -> NSAttributedString {
       NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: color])
+   }
+}
+
+extension NSMutableAttributedString {
+   /// Space after the last character, a whole one: a kern on the last
+   /// UTF-16 unit of an emoji such as ❤️ (whose last unit is FE0F) is lost.
+   func kernLast(by gap: CGFloat) {
+      let last = (string as NSString).rangeOfComposedCharacterSequence(at: length - 1)
+      addAttribute(.kern, value: gap, range: last)
    }
 }

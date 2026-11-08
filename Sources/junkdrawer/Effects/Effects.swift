@@ -9,6 +9,7 @@ struct Effects {
    /// Reloads apps and bookmarks, for the Reload data command.
    let reload: () -> Void
    let bookmarksFile: URL
+   let inserter = Inserter()
 
    nonisolated static let logFile = FileManager.default.homeDirectoryForCurrentUser
       .appending(path: "Library/Logs/Junkdrawer/junkdrawer.log")
@@ -20,8 +21,13 @@ struct Effects {
 
    """
 
-   func perform(_ action: Action) {
+   /// What happened, which differs from what was asked when an insert
+   /// had to copy instead.
+   @discardableResult
+   func perform(_ action: Action) -> Outcome {
       switch action {
+      case .insert(let string):
+         return inserter.insert(string)
       case .openApp(let url):
          NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
             if let error { Logger.app.error("opening \(url.path, privacy: .public) failed: \(error.localizedDescription, privacy: .public)") }
@@ -41,10 +47,11 @@ struct Effects {
          showLogs()
       case .command(.quit):
          NSApp.terminate(nil)
-      case .insert, .openDefinition, .setQuery:
-         // Symbols and the dictionary come in later milestones.
+      case .openDefinition, .setQuery:
+         // The dictionary comes in a later milestone.
          Logger.app.notice("not handled yet: \(String(describing: action), privacy: .public)")
       }
+      return .done
    }
 
    /// Creates the file with a commented example when it is missing, then

@@ -26,12 +26,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       NSApp.setActivationPolicy(.accessory)
 
       let panel = PanelController(usage: UsageStore())
-      let library = Library { items, icons in panel.update(items: items, icons: icons) }
+      let library = Library { index, icons in panel.update(index: index, icons: icons) }
       let effects = Effects(reload: { library.reload() }, bookmarksFile: library.bookmarksFile)
       let confirmation = Confirmation()
       panel.perform = { [unowned panel] item, action in
-         effects.perform(action)
-         if let text = item.confirmation(for: action) { confirmation.show(text, on: panel.screen) }
+         let outcome = effects.perform(action)
+         if let text = item.confirmation(for: action, outcome: outcome) { confirmation.show(text, on: panel.screen) }
       }
       self.library = library
       let hotKey = HotKey { panel.toggle() }

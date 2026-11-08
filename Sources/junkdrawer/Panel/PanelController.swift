@@ -32,8 +32,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// New data from the loaders. The selection stays on the same item when
    /// it is still there.
-   func update(items: [Item], icons: [String: CGImage]) {
-      index.items = items
+   func update(index: Index, icons: [String: CGImage]) {
+      self.index = index
       self.icons = icons
       let selected = rows.indices.contains(selection.index) ? rows[selection.index].item.id : nil
       refresh(keeping: selected)
