@@ -2,10 +2,13 @@ import Foundation
 
 /// Everything the list can search, as loaded by the shell.
 public struct Index: Sendable {
+   /// Apps, bookmarks and commands, for the plain mode.
    public var items: [Item]
+   public var symbols: Symbols
 
-   public init(items: [Item] = []) {
+   public init(items: [Item] = [], symbols: Symbols = Symbols()) {
       self.items = items
+      self.symbols = symbols
    }
 }
 
@@ -13,22 +16,28 @@ public struct Index: Sendable {
 public let recentLimit = 12
 
 /// The rows for a query, best first. An empty query lists recent picks;
-/// symbols and the dictionary come with later milestones.
+/// the dictionary comes with a later milestone.
 public func rows(for query: Query, in index: Index, usage: Usage, now: Date) -> [Row] {
    switch query.mode {
    case .plain where query.text.isEmpty:
-      recentRows(in: index.items, usage: usage)
+      recentRows(in: index, usage: usage)
    case .plain:
       plainRows(query.text, in: index.items, usage: usage, now: now)
+   case .latex where !query.text.isEmpty:
+      latexRows(query.text, in: index.symbols, usage: usage, now: now)
+   case .unicode where !query.text.isEmpty:
+      unicodeRows(query.text, in: index.symbols, usage: usage, now: now)
    case .latex, .unicode, .dictionary:
       []
    }
 }
 
 /// The recent picks that are still in the index, the latest first.
-private func recentRows(in items: [Item], usage: Usage) -> [Row] {
-   let byID = Dictionary(items.map { ($0.id, $0) }) { first, _ in first }
-   return usage.recent(limit: recentLimit).compactMap { byID[$0] }.map { Row(item: $0, matched: [], score: 0) }
+private func recentRows(in index: Index, usage: Usage) -> [Row] {
+   let byID = Dictionary(index.items.map { ($0.id, $0) }) { first, _ in first }
+   return usage.recent(limit: recentLimit)
+      .compactMap { byID[$0] ?? index.symbols.item(id: $0) }
+      .map { Row(item: $0, matched: [], score: 0) }
 }
 
 /// The better of the title match and 0.6 times the keywords match, apps a

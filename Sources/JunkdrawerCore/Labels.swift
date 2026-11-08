@@ -22,7 +22,7 @@ extension Item {
       case (_, .openApp): "open"
       case (_, .reveal): "reveal in Finder"
       case (_, .openURL): "open in default browser"
-      case (_, .insert(let string)): "insert \(string)"
+      case (_, .insert): "insert \(shown)"
       case (.bookmark, .copy): "copy url"
       case (.dictionary, .copy): "copy definition"
       case (_, .copy(let string)): "copy \(string)"
@@ -34,12 +34,17 @@ extension Item {
 
    /// The confirmation line after `action` ran, or nil when there is
    /// nothing to say, as after quitting.
-   public func confirmation(for action: Action) -> String? {
-      switch action {
+   public func confirmation(for action: Action, outcome: Outcome = .done) -> String? {
+      switch (action, outcome) {
+      case (.insert, .copiedSecureInput): return "copied \(shown), since secure input is on"
+      case (.insert, .copiedNoAccess): return "copied \(shown); allow junkdrawer in Privacy & Security, Accessibility to insert"
+      default: break
+      }
+      return switch action {
       case .openApp: "opened \(title)"
       case .reveal(let url): "revealed \(url.lastPathComponent) in Finder"
       case .openURL: "opened \(subtitle) in the default browser"
-      case .insert(let string): "inserted \(string)"
+      case .insert: "inserted \(shown)"
       case .copy(let string): kind == .dictionary ? "copied the definition of “\(title)”" : "copied \(string)"
       case .openDefinition: "opened “\(title)” in Dictionary"
       case .setQuery: nil
@@ -49,4 +54,17 @@ extension Item {
       case .command(.quit): nil
       }
    }
+
+   /// The symbol as the left cell shows it, so an invisible character reads
+   /// as its abbreviation.
+   private var shown: String { glyph ?? title }
+}
+
+/// How an action turned out, when it can differ from what was asked: an
+/// insert copies instead while secure input is on or before Accessibility
+/// access is granted.
+public enum Outcome: Hashable, Sendable {
+   case done
+   case copiedSecureInput
+   case copiedNoAccess
 }

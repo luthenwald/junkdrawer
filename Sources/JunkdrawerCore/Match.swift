@@ -9,15 +9,18 @@ public struct Match: Hashable, Sendable {
 /// beats a subsequence; a text that does not hold the query's characters in
 /// order gives nil, and so does an empty query.
 public func match(_ query: String, in text: String) -> Match? {
-   let needle = folded(query)
+   match(folded(query), in: folded(text))
+}
+
+/// The same on texts folded by `folded(_:)`, for keys folded once.
+func match(_ needle: [Character], in hay: [Character]) -> Match? {
    guard !needle.isEmpty else { return nil }
-   let hay = folded(text)
    return substring(needle, in: hay) ?? subsequence(needle.filter { $0 != " " }, in: hay)
 }
 
 /// Each character lowercased on its own, so offsets stay offsets in the
 /// original text.
-private func folded(_ text: String) -> [Character] {
+func folded(_ text: String) -> [Character] {
    text.map { $0.lowercased().first ?? $0 }
 }
 
