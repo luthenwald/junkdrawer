@@ -10,15 +10,17 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// measured from the top.
    private static let topOffset: CGFloat = 0.22
 
+   /// Carries out an action of a row, after the panel hid.
+   var perform: (Item, Action) -> Void = { _, _ in }
    private let panel = LauncherPanel()
-   private let perform: (Action) -> Void
+   private let usage: UsageStore
    private var index = Index()
    private var icons: [String: CGImage] = [:]
    private var rows: [Row] = []
    private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
 
-   init(perform: @escaping (Action) -> Void) {
-      self.perform = perform
+   init(usage: UsageStore) {
+      self.usage = usage
       super.init()
       panel.delegate = self
       panel.query.delegate = self
@@ -84,12 +86,15 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       render()
    }
 
-   /// Hides first, so an app that opens comes to the front over nothing.
-   private func run(_ action: KeyPath<Item, Action>) {
+   /// Records the pick, then hides, so an app that opens comes to the front
+   /// over nothing. Dictionary look-ups and quitting are not picks.
+   private func run(_ key: KeyPath<Item, Action>) {
       guard rows.indices.contains(selection.index) else { return }
       let item = rows[selection.index].item
+      let action = item[keyPath: key]
+      if item.kind != .dictionary, action != .command(.quit) { usage.record(item) }
       hide()
-      perform(item[keyPath: action])
+      perform(item, action)
    }
 
    private func clear() {
@@ -99,7 +104,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// Ranks the query again and selects `id`, or the first row.
    private func refresh(keeping id: String?) {
-      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index, usage: Usage(), now: Date())
+      rows = JunkdrawerCore.rows(for: Query(panel.query.stringValue), in: index, usage: usage.usage, now: Date())
       let position = id.flatMap { id in rows.firstIndex { $0.item.id == id } } ?? 0
       selection = Selection(count: rows.count, visible: LauncherPanel.visibleRows).moved(by: position)
       render()
