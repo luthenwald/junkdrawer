@@ -15,14 +15,16 @@ public struct Index: Sendable {
 /// How many recent picks an empty query lists.
 public let recentLimit = 12
 
-/// The rows for a query, best first. An empty query lists recent picks;
-/// the dictionary comes with a later milestone.
+/// The rows for a query, best first. An empty query lists recent picks,
+/// and a plain query of one word ends with a row to look it up. The
+/// dictionary mode has none here: its rows come from `dictionaryRows`
+/// once the shell has looked the word up.
 public func rows(for query: Query, in index: Index, usage: Usage, now: Date) -> [Row] {
    switch query.mode {
    case .plain where query.text.isEmpty:
       recentRows(in: index, usage: usage)
    case .plain:
-      plainRows(query.text, in: index.items, usage: usage, now: now)
+      plainRows(query.text, in: index.items, usage: usage, now: now) + (defineRow(query.text).map { [$0] } ?? [])
    case .latex where !query.text.isEmpty:
       latexRows(query.text, in: index.symbols, usage: usage, now: now)
    case .unicode where !query.text.isEmpty:
