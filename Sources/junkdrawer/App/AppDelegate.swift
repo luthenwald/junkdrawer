@@ -35,14 +35,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
       self.library = library
       let hotKey = HotKey { panel.toggle() }
-      do {
-         try hotKey.register(.toggle)
-      } catch {
-         Logger.app.error("registering the global shortcut failed with status \(error.status, privacy: .public)")
-      }
+      register(hotKey)
       self.panel = panel
       self.hotKey = hotKey
       loginItem.registerOnFirstLaunch()
+   }
+
+   /// ⌘Space, or ⌃⇧Space when ⌘Space is taken, as it is while Spotlight's
+   /// shortcut is on.
+   private func register(_ hotKey: HotKey) {
+      do {
+         try hotKey.register(.toggle)
+         Logger.app.notice("listening for Command-Space")
+      } catch {
+         Logger.app.error("registering Command-Space failed with status \(error.status, privacy: .public); is Spotlight's shortcut on?")
+         do {
+            try hotKey.register(.fallback)
+            Logger.app.notice("listening for Control-Shift-Space instead")
+         } catch {
+            Logger.app.error("registering Control-Shift-Space failed with status \(error.status, privacy: .public)")
+         }
+      }
    }
 
    /// Opening the app again while it runs shows the panel, in case the

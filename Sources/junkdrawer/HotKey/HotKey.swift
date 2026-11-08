@@ -7,7 +7,10 @@ struct Shortcut: Hashable, Codable {
    var modifiers: UInt32
    var key: String
 
-   static let toggle = Shortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey | shiftKey), key: "Space")
+   /// ⌘Space, which needs Spotlight's shortcut turned off.
+   static let toggle = Shortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(cmdKey), key: "Space")
+   /// ⌃⇧Space, for when ⌘Space is taken.
+   static let fallback = Shortcut(keyCode: UInt32(kVK_Space), modifiers: UInt32(controlKey | shiftKey), key: "Space")
 }
 
 struct HotKeyError: Error {
