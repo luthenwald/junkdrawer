@@ -78,6 +78,26 @@ final class LauncherPanel: NSPanel {
    override func cancelOperation(_ sender: Any?) {
       onCancel()
    }
+
+   /// The editing keys, which a text field otherwise gets from the Edit
+   /// menu; the app has no menu.
+   private static let editing: [String: (modifiers: NSEvent.ModifierFlags, action: Selector)] = [
+      "x": ([.command], #selector(NSText.cut(_:))),
+      "c": ([.command], #selector(NSText.copy(_:))),
+      "v": ([.command], #selector(NSText.paste(_:))),
+      "a": ([.command], #selector(NSText.selectAll(_:))),
+      "z": ([.command], Selector(("undo:"))),
+      "Z": ([.command, .shift], Selector(("redo:"))),
+   ]
+
+   override func performKeyEquivalent(with event: NSEvent) -> Bool {
+      let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
+      if let key = event.charactersIgnoringModifiers, let edit = Self.editing[key], edit.modifiers == modifiers,
+         NSApp.sendAction(edit.action, to: nil, from: self) {
+         return true
+      }
+      return super.performKeyEquivalent(with: event)
+   }
 }
 
 /// The panel's background with a hairline border and rounded corners.
