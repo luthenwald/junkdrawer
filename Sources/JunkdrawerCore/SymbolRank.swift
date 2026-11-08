@@ -25,6 +25,8 @@ func unicodeRows(_ text: String, in symbols: Symbols, usage: Usage, now: Date) -
 /// LaTeX mode, on the command without its backslash: exact 1000, exact
 /// ignoring case 950, prefix 800 minus the extra length, prefix ignoring
 /// case 750, then the fuzzy match, then half the Unicode score of the name.
+/// Each character appears once, under its best-matching command, so
+/// `\lambda` hides `\uplambda` and `\lambdaup` while `\to` still finds →.
 func latexRows(_ text: String, in symbols: Symbols, usage: Usage, now: Date) -> [Row] {
    let typed = Array(text.utf8)
    let lowered = Array(text.lowercased().utf8)
@@ -42,24 +44,37 @@ func latexRows(_ text: String, in symbols: Symbols, usage: Usage, now: Date) -> 
       return nil
    }
    let marks = Dictionary(scored.map { ($0.index, $0.marks) }) { a, _ in a }
-   return ranked(scored.map { ($0.index, $0.score) }, items: symbols.latex, order: { symbols.latexKeys[$0].order }, positions: symbols.latexIndex, usage: usage, now: now) {
+   return ranked(scored.map { ($0.index, $0.score) }, items: symbols.latex, order: { symbols.latexKeys[$0].order }, positions: symbols.latexIndex, usage: usage, now: now, group: { symbols.latexKeys[$0].symbol }) {
       marks[$0] ?? []
    }
 }
 
 /// Adds the frecency bonus, sorts best first with ties in title order, and
 /// builds the first `symbolRowLimit` rows. The bonus is looked up for the
-/// picked ids only, since a short query matches most of the table.
+/// picked ids only, since a short query matches most of the table. With a
+/// `group`, only the best of each group stays, ties going to the lower
+/// index, which for LaTeX is the more standard command.
 private func ranked(
    _ scored: [(index: Int, score: Double)], items: [Item], order: (Int) -> Int,
-   positions: [String: Int], usage: Usage, now: Date, matched: (Int) -> [Int]
+   positions: [String: Int], usage: Usage, now: Date, group: ((Int) -> Int)? = nil, matched: (Int) -> [Int]
 ) -> [Row] {
    let bonus = Dictionary(usage.picks.keys.compactMap { id in positions[id].map { ($0, usage.bonus(for: id, now: now)) } }) { a, _ in a }
-   let keyed = scored.map { (index: $0.index, score: $0.score + (bonus[$0.index] ?? 0), order: order($0.index)) }
-   return keyed
+   let keyed: [Keyed] = scored.map { (index: $0.index, score: $0.score + (bonus[$0.index] ?? 0), order: order($0.index)) }
+   let kept = group.map { bestOfEach(keyed, by: $0) } ?? keyed
+   return kept
       .sorted { a, b in a.score != b.score ? a.score > b.score : a.order < b.order }
       .prefix(symbolRowLimit)
       .map { Row(item: items[$0.index], matched: matched($0.index), score: $0.score) }
+}
+
+private typealias Keyed = (index: Int, score: Double, order: Int)
+
+private func bestOfEach(_ keyed: [Keyed], by group: (Int) -> Int) -> [Keyed] {
+   let best = Dictionary(keyed.map { (group($0.index), $0) }) { (a: Keyed, b: Keyed) -> Keyed in
+      if a.score != b.score { return a.score > b.score ? a : b }
+      return a.index < b.index ? a : b
+   }
+   return Array(best.values)
 }
 
 private func queryWords(_ text: String) -> [[UInt8]] {
