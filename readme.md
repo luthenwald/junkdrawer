@@ -5,7 +5,7 @@ A minimal, keyboard-only launcher for macOS.
 ## What it does
 
 - Launches at login and stays out of the way until summoned with `⌘Space`.
-- Opens apps, and bookmarks from a plain text file in the default browser.
+- Opens apps, the panes of System Settings, and bookmarks from a plain text file in the default browser.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
 - Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
@@ -28,7 +28,7 @@ A minimal, keyboard-only launcher for macOS.
 
 ## Settings
 
-Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position.
+Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position. Running Settings while its window is open on another Space or AeroSpace workspace opens it where you are.
 
 ## Inserting symbols
 
