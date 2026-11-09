@@ -9,7 +9,7 @@ A minimal, keyboard-only launcher for macOS.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
 - Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
-- Has no menu. Reload data, Edit bookmarks, Show logs, Settings and Quit junkdrawer are found and run like apps.
+- Has no menu. Reload data, Edit bookmarks, Show logs, Settings and Quit junkdrawer are found and run like apps, and so are Sleep, Sleep displays, Lock screen, Log out, Restart, Shut down and Empty Trash. Restart, Shut down and Log out show the system's dialog first.
 - Can be dragged anywhere, and opens there again on that screen.
 
 ## Keyboard
@@ -22,6 +22,7 @@ A minimal, keyboard-only launcher for macOS.
 | `⌘↵` | Reveal, copy the URL, copy the command or codepoint, copy the definition |
 | `Esc` | Clear the query, then hide |
 | `⌘,` | Open Settings |
+| `⌘Q` | Quit junkdrawer |
 
 `⌘Space` is Spotlight's shortcut too, so turn that off in System Settings, Keyboard, Keyboard Shortcuts, Spotlight. While Spotlight holds it, junkdrawer listens for `⌃⇧Space` instead. You can record another shortcut in Settings.
 
@@ -31,7 +32,7 @@ Settings holds the shortcut, launching at login, extra folders to search for app
 
 ## Inserting symbols
 
-Inserting types the symbol into the app that was in front, which macOS only allows once junkdrawer is turned on in System Settings, Privacy & Security, Accessibility. The first insert asks for it. Until then, and while a password field has focus, symbols are copied to the clipboard instead.
+Inserting types the symbol into the app that was in front, which macOS only allows once junkdrawer is turned on in System Settings, Privacy & Security, Accessibility. The first insert asks for it. Until then, and while a password field has focus, symbols are copied to the clipboard instead. Lock screen uses the same access, and Empty Trash asks once to let junkdrawer control Finder.
 
 ## Bookmarks
 

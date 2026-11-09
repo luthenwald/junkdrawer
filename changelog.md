@@ -16,5 +16,7 @@
 - New: Type `?` and a word to see its entry from the macOS dictionary as you type, with suggestions when the spelling is off; ↵ opens it in Dictionary and ⌘↵ copies the definition.
 - New: A search for a single word ends with a row that looks the word up in the dictionary.
 - New: Settings, opened with ⌘, in the launcher or by searching for Settings. There you can record another shortcut for showing the launcher, turn launching at login on or off, add folders to search for apps, choose another bookmarks file, and pick a light or dark appearance instead of following the system.
+- New: ⌘Q quits junkdrawer while the launcher or Settings is in front.
+- New: Sleep, Restart, Shut down, Log out, Lock screen, Sleep displays and Empty Trash can be found and run like apps. Restart, Shut down and Log out ask first with the system's own dialog, and none of these four show up among your recent picks.
 - New: You can drag the launcher anywhere. It opens there again on that screen, and Reset in Settings puts it back in the middle.
 - New: The first time you insert a symbol, macOS asks to let junkdrawer control your computer. Until you allow it, and whenever a password field has focus, the symbol is copied and the line at the bottom says so.
