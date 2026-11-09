@@ -16,6 +16,9 @@ final class ResultList: NSView {
    /// The stroke icon for dictionary entries and the Define row.
    private static let book = NSImage(systemSymbolName: "book", accessibilityDescription: nil)?
       .withSymbolConfiguration(.init(pointSize: 15, weight: .light))
+   /// The stroke icon for System Settings panes.
+   private static let gear = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)?
+      .withSymbolConfiguration(.init(pointSize: 15, weight: .light))
 
    override var isFlipped: Bool { true }
 
@@ -48,12 +51,13 @@ final class ResultList: NSView {
    }
 
    /// The gray icon for apps, the link for bookmarks, the book for the
-   /// dictionary, nothing for commands.
+   /// dictionary, the gear for System Settings panes, nothing for commands.
    private static func icon(for item: Item, in icons: [String: CGImage]) -> NSImage? {
       switch item.kind {
       case .app: icons[item.id].map { NSImage(cgImage: $0, size: NSSize(width: 28, height: 28)) }
       case .bookmark: link
       case .dictionary: book
+      case .setting: gear
       case .latex, .unicode, .command: nil
       }
    }

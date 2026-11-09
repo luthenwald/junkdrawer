@@ -22,6 +22,7 @@ public enum Kind: Hashable, Sendable {
    case unicode
    case dictionary
    case command
+   case setting
 }
 
 /// One thing the list can show.

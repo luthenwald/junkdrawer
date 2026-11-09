@@ -21,6 +21,7 @@ extension Item {
       switch (kind, action) {
       case (_, .openApp): "open"
       case (_, .reveal): "reveal in Finder"
+      case (.setting, .openURL): "open in System Settings"
       case (_, .openURL): "open in default browser"
       case (_, .insert): "insert \(shown)"
       case (.bookmark, .copy): "copy url"
@@ -44,7 +45,7 @@ extension Item {
       return switch action {
       case .openApp: "opened \(title)"
       case .reveal(let url): "revealed \(url.lastPathComponent) in Finder"
-      case .openURL: "opened \(subtitle) in the default browser"
+      case .openURL: kind == .setting ? "opened \(title) in System Settings" : "opened \(subtitle) in the default browser"
       case .insert: "inserted \(shown)"
       case .copy(let string): kind == .dictionary ? "copied the definition of “\(title)”" : "copied \(string)"
       case .openDefinition: "opened “\(title)” in Dictionary"

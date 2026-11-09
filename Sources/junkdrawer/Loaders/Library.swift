@@ -2,8 +2,8 @@ import CoreGraphics
 import Foundation
 import JunkdrawerCore
 
-/// Everything the panel can list: apps, bookmarks, the built-in commands
-/// and the symbol table, published together whenever a source changes.
+/// Everything the panel can list: apps, bookmarks, the built-in commands,
+/// the System Settings panes and the symbol table, published together whenever a source changes.
 /// The app folders and the bookmarks file follow the settings.
 @MainActor
 final class Library {
@@ -56,6 +56,6 @@ final class Library {
    }
 
    private func push() {
-      publish(Index(items: apps + bookmarks + Command.items, symbols: symbols), icons)
+      publish(Index(items: apps + bookmarks + Command.items + SystemSettings.items, symbols: symbols), icons)
    }
 }
