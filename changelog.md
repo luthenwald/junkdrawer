@@ -15,7 +15,7 @@
 - New: Type `:` and words from a character's name, such as `:arrow right` or `:heart`, to insert any Unicode character or emoji, drawn in its own colors; ⌘↵ copies its code point.
 - New: Type `?` and a word to see its entry from the macOS dictionary as you type, with suggestions when the spelling is off; ↵ opens it in Dictionary and ⌘↵ copies the definition.
 - New: A search for a single word ends with a row that looks the word up in the dictionary.
-- New: Settings, opened with ⌘, in the launcher or by searching for Settings. There you can record another shortcut for showing the launcher, turn launching at login on or off, add folders to search for apps, choose another bookmarks file, and pick a light or dark appearance instead of following the system. Settings always opens where you are, also when it was left open on another Space or AeroSpace workspace.
+- New: Settings, opened with ⌘, in the launcher or by searching for Settings. There you can record another shortcut for showing the launcher, turn launching at login on or off, add folders to search for apps, choose another bookmarks file, and pick a light or dark appearance instead of following the system. Settings opens where you are, also when it was left open on another Space.
 - New: The panes of System Settings, such as Appearance, Privacy & Security or Desktop & Dock, can be found like apps, also by words like "dock", "wifi" or "camera", and ↵ opens the pane.
 - New: ⌘Q quits junkdrawer while the launcher or Settings is in front.
 - New: Sleep, Restart, Shut down, Log out, Lock screen, Sleep displays and Empty Trash can be found and run like apps. Restart, Shut down and Log out ask first with the system's own dialog, and none of these four show up among your recent picks.

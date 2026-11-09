@@ -28,7 +28,7 @@ A minimal, keyboard-only launcher for macOS.
 
 ## Settings
 
-Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position. Running Settings while its window is open on another Space or AeroSpace workspace opens it where you are.
+Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position. Running Settings while its window is open on another Space opens it where you are.
 
 ## Inserting symbols
 
