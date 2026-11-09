@@ -32,6 +32,7 @@ cat > "$OUT/Contents/Info.plist" <<EOF
   <key>NSHumanReadableCopyright</key><string>Copyright (c) junkdrawer Contributors, MIT License</string>
   <key>LSMinimumSystemVersion</key><string>27.0</string>
   <key>LSUIElement</key><true/>
+  <key>NSAppleEventsUsageDescription</key><string>junkdrawer asks Finder to empty the Trash, and the system to sleep, restart, shut down or log out.</string>
 </dict>
 </plist>
 EOF

@@ -138,7 +138,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    }
 
    /// Records the pick, then hides, so an app that opens comes to the front
-   /// over nothing. Dictionary look-ups and quitting are not picks. The
+   /// over nothing. Dictionary look-ups and some commands are not picks. The
    /// Define row sets the query instead and keeps the panel open.
    private func run(_ key: KeyPath<Item, Action>) {
       guard rows.indices.contains(selection.index) else { return }
@@ -148,7 +148,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
          setQuery(text)
          return
       }
-      if item.kind != .dictionary, action != .command(.quit) { usage.record(item) }
+      let isPick = if case .command(let command) = action { command.isPick } else { item.kind != .dictionary }
+      if isPick { usage.record(item) }
       hide()
       perform(item, action)
    }

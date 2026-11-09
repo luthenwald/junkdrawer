@@ -19,14 +19,12 @@ final class Inserter {
    /// How long a paste may take before the old pasteboard comes back.
    private static let restoreDelay = 0.5
 
-   private var askedForAccess = false
-
    func insert(_ string: String) -> Outcome {
       if IsSecureEventInputEnabled() {
          copy(string)
          return .copiedSecureInput
       }
-      guard isTrusted() else {
+      guard Accessibility.isTrusted() else {
          copy(string)
          return .copiedNoAccess
       }
@@ -35,20 +33,6 @@ final class Inserter {
          if usePaste { paste(string) } else { type(string) }
       }
       return .done
-   }
-
-   /// Shows the system prompt on the first insert of a launch without
-   /// access; later inserts only check.
-   private func isTrusted() -> Bool {
-      if AXIsProcessTrusted() { return true }
-      if !askedForAccess {
-         askedForAccess = true
-         // The value of kAXTrustedCheckOptionPrompt, a global var Swift 6
-         // does not allow from here.
-         _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-         Logger.app.notice("asked for Accessibility access")
-      }
-      return false
    }
 
    /// A key-down and key-up per chunk of whole characters, with no

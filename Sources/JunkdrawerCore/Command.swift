@@ -4,6 +4,13 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
    case editBookmarks
    case showLogs
    case settings
+   case sleep
+   case sleepDisplays
+   case lockScreen
+   case logOut
+   case restart
+   case shutDown
+   case emptyTrash
    case quit
 
    public var title: String {
@@ -12,13 +19,36 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
       case .editBookmarks: "Edit bookmarks"
       case .showLogs: "Show logs"
       case .settings: "Settings"
+      case .sleep: "Sleep"
+      case .sleepDisplays: "Sleep displays"
+      case .lockScreen: "Lock screen"
+      case .logOut: "Log out"
+      case .restart: "Restart"
+      case .shutDown: "Shut down"
+      case .emptyTrash: "Empty Trash"
       case .quit: "Quit junkdrawer"
       }
    }
 
    /// Other words that find the command.
    public var keywords: String {
-      self == .settings ? "preferences" : ""
+      switch self {
+      case .settings: "preferences"
+      case .sleepDisplays: "display screen off"
+      case .lockScreen: "lock"
+      case .logOut: "logout sign out"
+      case .restart: "reboot"
+      case .shutDown: "power off shutdown"
+      case .emptyTrash: "bin"
+      default: ""
+      }
+   }
+
+   /// Whether running it counts as a pick. Those that end the session or
+   /// cannot be undone never join the recent list, where ↵ on an empty
+   /// query would run them.
+   public var isPick: Bool {
+      ![.quit, .logOut, .restart, .shutDown, .emptyTrash].contains(self)
    }
 
    /// The command's row, matched like apps.

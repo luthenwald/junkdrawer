@@ -51,6 +51,8 @@ struct Effects {
          openSettings()
       case .command(.quit):
          NSApp.terminate(nil)
+      case .command(let command):
+         return System.perform(command)
       case .openDefinition(let word):
          guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
                let url = URL(string: "dict://" + encoded), NSWorkspace.shared.open(url)

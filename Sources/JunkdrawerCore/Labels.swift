@@ -38,6 +38,7 @@ extension Item {
       switch (action, outcome) {
       case (.insert, .copiedSecureInput): return "copied \(shown), since secure input is on"
       case (.insert, .copiedNoAccess): return "copied \(shown); allow junkdrawer in Privacy & Security, Accessibility to insert"
+      case (_, .noAccess): return "allow junkdrawer in Privacy & Security, Accessibility to \(title.lowercased())"
       default: break
       }
       return switch action {
@@ -51,8 +52,9 @@ extension Item {
       case .command(.reload): "reloaded apps and bookmarks"
       case .command(.editBookmarks): "opened the bookmarks file"
       case .command(.showLogs): "opened the log"
-      // The window shows itself.
-      case .command(.settings), .command(.quit): nil
+      case .command(.emptyTrash): "emptied the Trash"
+      // The rest show for themselves.
+      case .command: nil
       }
    }
 
@@ -63,9 +65,10 @@ extension Item {
 
 /// How an action turned out, when it can differ from what was asked: an
 /// insert copies instead while secure input is on or before Accessibility
-/// access is granted.
+/// access is granted, and locking the screen needs that access too.
 public enum Outcome: Hashable, Sendable {
    case done
    case copiedSecureInput
    case copiedNoAccess
+   case noAccess
 }
