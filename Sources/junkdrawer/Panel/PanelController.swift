@@ -48,7 +48,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.onCancel = { [unowned self] in hide() }
       panel.onSecondary = { [unowned self] in run(\.secondary) }
       panel.onCommand = { [unowned self] command in
-         hide()
+         hide(handingBack: !command.opensWindow)
          perform(command.item, .command(command))
       }
    }
@@ -87,13 +87,15 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       }
    }
 
-   func hide() {
+   /// Hiding the app hands the focus back, unless the settings window is
+   /// open or a command is about to open it. The app counts as active while
+   /// the panel is key, also when another app is in front.
+   func hide(handingBack: Bool = true) {
       guard panel.isVisible else { return }
       panel.orderOut(nil)
       clear()
-      // Reopening from Finder activates the app; hiding it hands focus back,
-      // unless the settings window is open.
-      if NSApp.isActive, !NSApp.windows.contains(where: { $0.isVisible && $0.canBecomeMain }) { NSApp.hide(nil) }
+      guard handingBack, NSApp.isActive, !NSApp.windows.contains(where: { $0.isVisible && $0.canBecomeMain }) else { return }
+      NSApp.hide(nil)
    }
 
    func windowDidResignKey(_ notification: Notification) {
@@ -149,8 +151,9 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
          return
       }
       let isPick = if case .command(let command) = action { command.isPick } else { item.kind != .dictionary }
+      let opensWindow = if case .command(let command) = action { command.opensWindow } else { false }
       if isPick { usage.record(item) }
-      hide()
+      hide(handingBack: !opensWindow)
       perform(item, action)
    }
 

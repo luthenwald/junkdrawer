@@ -51,6 +51,14 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
       ![.quit, .logOut, .restart, .shutDown, .emptyTrash].contains(self)
    }
 
+   /// Whether it opens a window of the app itself. The panel then hides
+   /// without handing the focus back, since macOS would give it to some
+   /// window of the previous app, and a window manager such as AeroSpace
+   /// would follow that window to its workspace.
+   public var opensWindow: Bool {
+      self == .settings
+   }
+
    /// The command's row, matched like apps.
    public var item: Item {
       Item(

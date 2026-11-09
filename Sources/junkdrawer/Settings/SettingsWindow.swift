@@ -28,14 +28,18 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
 
    func show() {
       loginItem.refresh()
-      NSApp.activate()
       if let window, window.isVisible, window.isOnActiveSpace, Self.isMostlyOnScreen(window.frame) {
+         NSApp.activate()
          window.makeKeyAndOrderFront(nil)
          return
       }
+      // The old window goes before the app activates: AeroSpace follows the
+      // focus to the app's window, and would switch to the old window's
+      // workspace and open the new one there.
       retire()
       let window = makeWindow()
       self.window = window
+      NSApp.activate()
       window.makeKeyAndOrderFront(nil)
    }
 
