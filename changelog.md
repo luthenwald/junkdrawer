@@ -24,3 +24,4 @@
 - New: ⌘H hides the selected app or System Settings pane from the results. Settings lists what you have hidden and brings each one back.
 - New: Statistics, found like an app or opened from Settings, shows how often you used apps, bookmarks, commands, settings panes, symbols and the dictionary, day by day, and what you used most. You can export the counts as JSON or CSV.
 - New: The first time you insert a symbol, macOS asks to let junkdrawer control your computer. Until you allow it, and whenever a password field has focus, the symbol is copied and the line at the bottom says so.
+- New: junkdrawer has an icon, which shows in Finder, in Login Items and in the Privacy & Security lists.

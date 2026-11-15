@@ -16,6 +16,7 @@ rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 cp "$BIN" "$OUT/Contents/MacOS/$APP"
 if [ -f Resources/symbols.tsv ]; then cp Resources/symbols.tsv "$OUT/Contents/Resources/"; fi
+cp Resources/AppIcon.icns "$OUT/Contents/Resources/"
 
 cat > "$OUT/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -24,6 +25,7 @@ cat > "$OUT/Contents/Info.plist" <<EOF
 <dict>
   <key>CFBundleExecutable</key><string>$APP</string>
   <key>CFBundleIdentifier</key><string>$ID</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleName</key><string>$APP</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
