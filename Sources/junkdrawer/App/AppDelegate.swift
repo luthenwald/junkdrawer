@@ -6,7 +6,7 @@ import os
 final class AppDelegate: NSObject, NSApplicationDelegate {
    private let loginItem = LoginItem()
    private let settings = Settings()
-   private var settingsWindow: SettingsWindow?
+   private var windows: [AppWindow] = []
    private var panel: PanelController?
    private var library: Library?
    private var shortcut: GlobalShortcut?
@@ -32,8 +32,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       let panel = PanelController(usage: usage, stats: stats, settings: settings)
       let library = Library(settings: settings) { index, icons in panel.update(index: index, icons: icons) }
       let shortcut = GlobalShortcut(settings: settings) { panel.toggle() }
-      let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem, shortcut: shortcut)
-      let effects = Effects(reload: { library.reload() }, openSettings: { settingsWindow.show() }, bookmarksFile: { library.bookmarksFile })
+      let statsWindow = AppWindow(title: "Junkdrawer Statistics") { StatsView(store: stats) }
+      let settingsWindow = AppWindow(title: "Junkdrawer Settings", willShow: loginItem.refresh) { [settings, loginItem] in
+         SettingsView(settings: settings, loginItem: loginItem, shortcut: shortcut) { statsWindow.show() }
+      }
+      let effects = Effects(
+         reload: { library.reload() }, openSettings: { settingsWindow.show() }, openStatistics: { statsWindow.show() },
+         bookmarksFile: { library.bookmarksFile }
+      )
       let confirmation = Confirmation()
       panel.perform = { [unowned panel] item, action in
          let outcome = effects.perform(action)
@@ -41,7 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
       panel.notify = { [unowned panel] text in confirmation.show(text, on: panel.screen) }
       self.library = library
-      self.settingsWindow = settingsWindow
+      windows = [settingsWindow, statsWindow]
       track { [settings] in NSApp.appearance = settings.appearance.nsAppearance }
       self.panel = panel
       self.shortcut = shortcut

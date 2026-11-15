@@ -5,6 +5,7 @@ struct SettingsView: View {
    @Bindable var settings: Settings
    let loginItem: LoginItem
    let shortcut: GlobalShortcut
+   let openStatistics: () -> Void
 
    var body: some View {
       VStack(spacing: 0) {
@@ -50,14 +51,14 @@ struct SettingsView: View {
                   .foregroundStyle(.secondary)
             }
             Section {
-               ForEach(settings.hidden.sorted { $0.value.localizedStandardCompare($1.value) == .orderedAscending }, id: \.key) { id, title in
-                  HStack {
-                     Text(title)
-                     Spacer()
-                     Button { settings.hidden[id] = nil } label: { Image(systemName: "arrow.uturn.backward.circle") }
-                        .buttonStyle(.borderless)
-                        .help("Show again")
+               // More than a few scroll in place, so the window keeps its height.
+               if settings.hidden.count > Self.hiddenShown {
+                  ScrollView {
+                     VStack(spacing: 10) { hiddenRows }
                   }
+                  .frame(height: 96)
+               } else {
+                  hiddenRows
                }
                if settings.hidden.isEmpty { Text("None").foregroundStyle(.secondary) }
             } header: {
@@ -88,16 +89,34 @@ struct SettingsView: View {
          .scrollDisabled(true)
          .fixedSize(horizontal: false, vertical: true)
 
-         if let version {
-            Text("Junkdrawer \(version)")
-               .font(.caption)
-               .foregroundStyle(.secondary)
-               .padding(.bottom, 20)
+         HStack {
+            if let version {
+               Text("Junkdrawer \(version)")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Statistics…", action: openStatistics)
          }
+         .padding([.horizontal, .bottom], 20)
       }
       .frame(width: 420)
       // Grayscale, as the panel is.
       .tint(.gray)
+   }
+
+   private static let hiddenShown = 3
+
+   @ViewBuilder private var hiddenRows: some View {
+      ForEach(settings.hidden.sorted { $0.value.localizedStandardCompare($1.value) == .orderedAscending }, id: \.key) { id, title in
+         HStack {
+            Text(title)
+            Spacer()
+            Button { settings.hidden[id] = nil } label: { Image(systemName: "arrow.uturn.backward.circle") }
+               .buttonStyle(.borderless)
+               .help("Show again")
+         }
+      }
    }
 
    private func addFolder() {

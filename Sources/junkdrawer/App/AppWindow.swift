@@ -2,32 +2,32 @@ import AppKit
 import Carbon.HIToolbox
 import SwiftUI
 
-/// A standard window with the settings. The app has no menu, so the window
-/// closes on ⌘W and quits the app on ⌘Q itself, and closing it hands the focus back to the app
-/// that was in front.
+/// A standard window of the app, such as the settings or the statistics.
+/// The app has no menu, so the window closes on ⌘W and quits the app on ⌘Q
+/// itself, and closing the last one hands the focus back to the app that
+/// was in front.
 ///
 /// Showing it where the user is takes a new window: a tiling window manager
 /// such as AeroSpace keeps every workspace on one Space and parks the
 /// windows of the others in a screen corner, so bringing the old window to
 /// the front would leave it there. A new window joins the focused workspace.
 @MainActor
-final class SettingsWindow: NSObject, NSWindowDelegate {
-   private let settings: Settings
-   private let loginItem: LoginItem
-   private let shortcut: GlobalShortcut
+final class AppWindow: NSObject, NSWindowDelegate {
+   private let title: String
+   private let willShow: () -> Void
+   private let content: () -> AnyView
    private var window: Window?
 
-   init(settings: Settings, loginItem: LoginItem, shortcut: GlobalShortcut) {
-      self.settings = settings
-      self.loginItem = loginItem
-      self.shortcut = shortcut
+   /// `willShow` runs before each show, for state the content reads once.
+   init(title: String, willShow: @escaping () -> Void = {}, content: @escaping () -> some View) {
+      self.title = title
+      self.willShow = willShow
+      self.content = { AnyView(content()) }
       super.init()
    }
 
-   var isVisible: Bool { window?.isVisible ?? false }
-
    func show() {
-      loginItem.refresh()
+      willShow()
       if let window, window.isVisible, window.isOnActiveSpace, Self.isMostlyOnScreen(window.frame) {
          NSApp.activate()
          window.makeKeyAndOrderFront(nil)
@@ -43,18 +43,21 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
       window.makeKeyAndOrderFront(nil)
    }
 
+   /// Hides the app, unless another of its windows still shows.
    func windowWillClose(_ notification: Notification) {
+      let closing = notification.object as? NSWindow
+      guard !NSApp.windows.contains(where: { $0 !== closing && $0.isVisible && $0.canBecomeMain }) else { return }
       NSApp.hide(nil)
    }
 
    private func makeWindow() -> Window {
-      let hosting = NSHostingController(rootView: SettingsView(settings: settings, loginItem: loginItem, shortcut: shortcut))
+      let hosting = NSHostingController(rootView: content())
       hosting.sizingOptions = .preferredContentSize
       let window = Window(contentViewController: hosting)
-      window.title = "Junkdrawer Settings"
+      window.title = title
       window.styleMask = [.titled, .closable]
       window.isReleasedWhenClosed = false
-      // The form's size, so the window centres at its real size.
+      // The content's size, so the window centres at its real size.
       window.setContentSize(hosting.view.fittingSize)
       window.center()
       window.delegate = self

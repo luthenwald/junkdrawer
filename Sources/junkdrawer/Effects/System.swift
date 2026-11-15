@@ -21,7 +21,7 @@ enum System {
       case .sleepDisplays: run("/usr/bin/pmset", ["displaysleepnow"])
       case .lockScreen: return lockScreen()
       case .emptyTrash: emptyTrash()
-      case .reload, .editBookmarks, .showLogs, .settings, .quit:
+      case .reload, .editBookmarks, .showLogs, .settings, .statistics, .quit:
          Logger.app.error("\(command.rawValue, privacy: .public) is not a system command")
       }
       return .done

@@ -4,6 +4,7 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
    case editBookmarks
    case showLogs
    case settings
+   case statistics
    case sleep
    case sleepDisplays
    case lockScreen
@@ -19,6 +20,7 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
       case .editBookmarks: "Edit bookmarks"
       case .showLogs: "Show logs"
       case .settings: "Settings"
+      case .statistics: "Statistics"
       case .sleep: "Sleep"
       case .sleepDisplays: "Sleep displays"
       case .lockScreen: "Lock screen"
@@ -34,6 +36,7 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
    public var keywords: String {
       switch self {
       case .settings: "preferences"
+      case .statistics: "stats usage counts"
       case .sleepDisplays: "display screen off"
       case .lockScreen: "lock"
       case .logOut: "logout sign out"
@@ -56,7 +59,7 @@ public enum Command: String, Hashable, Sendable, CaseIterable {
    /// window of the previous app, and a window manager such as AeroSpace
    /// would follow that window to its workspace.
    public var opensWindow: Bool {
-      self == .settings
+      self == .settings || self == .statistics
    }
 
    /// The command's row, matched like apps.
