@@ -55,7 +55,7 @@ https://codeberg.org Codeberg #git #forge
 
 ## Building
 
-Needs the Command Line Tools.
+Needs macOS 27 and its Command Line Tools, which bring Swift 6.4. Older Swift compilers cannot build against the macOS 27 SDK.
 
 ```sh
 ./bundle.sh                                # build and sign build/Junkdrawer.app
