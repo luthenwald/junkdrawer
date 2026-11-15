@@ -44,6 +44,9 @@ extension Item {
       case (.insert, .copiedSecureInput): return "copied \(shown), since secure input is on"
       case (.insert, .copiedNoAccess): return "copied \(shown); allow junkdrawer in Privacy & Security, Accessibility to insert"
       case (_, .noAccess): return "allow junkdrawer in Privacy & Security, Accessibility to \(title.lowercased())"
+      case (_, .noAutomation): return "allow junkdrawer to control Finder in Privacy & Security, Automation"
+      // macOS is asking, or the answer comes later; nothing happened yet.
+      case (_, .pending): return nil
       default: break
       }
       return switch action {
@@ -73,9 +76,13 @@ extension Item {
 /// How an action turned out, when it can differ from what was asked: an
 /// insert copies instead while secure input is on or before Accessibility
 /// access is granted, and locking the screen needs that access too.
+/// Emptying the Trash needs leave to control Finder, which macOS asks for
+/// the first time.
 public enum Outcome: Hashable, Sendable {
    case done
    case copiedSecureInput
    case copiedNoAccess
    case noAccess
+   case noAutomation
+   case pending
 }

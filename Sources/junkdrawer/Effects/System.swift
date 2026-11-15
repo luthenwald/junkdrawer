@@ -20,7 +20,7 @@ enum System {
       case .logOut: tellLoginWindow(kAELogOut)
       case .sleepDisplays: run("/usr/bin/pmset", ["displaysleepnow"])
       case .lockScreen: return lockScreen()
-      case .emptyTrash: emptyTrash()
+      case .emptyTrash: return emptyTrash()
       case .reload, .editBookmarks, .showLogs, .settings, .statistics, .quit:
          Logger.app.error("\(command.rawValue, privacy: .public) is not a system command")
       }
@@ -54,20 +54,22 @@ enum System {
       return .done
    }
 
-   /// Off the main thread, since the first time macOS asks whether
-   /// junkdrawer may control Finder and the send waits for the answer.
-   /// Once refused, Privacy & Security opens at Automation instead.
-   private static func emptyTrash() {
+   /// Says first whether junkdrawer may control Finder, without asking.
+   /// Once refused, Privacy & Security opens at Automation instead. The
+   /// event goes off the main thread, since the first time macOS asks and
+   /// the send waits for the answer.
+   private static func emptyTrash() -> Outcome {
+      let finder = NSAppleEventDescriptor(bundleIdentifier: "com.apple.finder")
+      let permission = finder.aeDesc.map { AEDeterminePermissionToAutomateTarget($0, typeWildCard, typeWildCard, false) } ?? noErr
+      guard permission != errAEEventNotPermitted else {
+         Logger.app.error("not allowed to control Finder")
+         openAutomationSettings()
+         return .noAutomation
+      }
       Task.detached {
-         let finder = NSAppleEventDescriptor(bundleIdentifier: "com.apple.finder")
-         let permission = finder.aeDesc.map { AEDeterminePermissionToAutomateTarget($0, typeWildCard, typeWildCard, false) } ?? noErr
-         guard permission != errAEEventNotPermitted else {
-            Logger.app.error("not allowed to control Finder")
-            await openAutomationSettings()
-            return
-         }
          let event = NSAppleEventDescriptor(
-            eventClass: AEEventClass(kAEFinderSuite), eventID: AEEventID(kAEEmptyTrash), targetDescriptor: finder,
+            eventClass: AEEventClass(kAEFinderSuite), eventID: AEEventID(kAEEmptyTrash),
+            targetDescriptor: NSAppleEventDescriptor(bundleIdentifier: "com.apple.finder"),
             returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID)
          )
          do {
@@ -76,6 +78,7 @@ enum System {
             Logger.app.error("emptying the Trash failed with \((error as NSError).code, privacy: .public)")
          }
       }
+      return permission == noErr ? .done : .pending
    }
 
    private static func openAutomationSettings() {
