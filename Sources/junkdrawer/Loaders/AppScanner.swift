@@ -43,12 +43,17 @@ enum AppScanner {
 
    private static func item(_ url: URL) -> Item {
       let name = FileManager.default.displayName(atPath: url.path)
+      let title = name.hasSuffix(".app") ? String(name.dropLast(4)) : name
+      let file = url.deletingPathExtension().lastPathComponent
       let folder = url.deletingLastPathComponent().path
       return Item(
          id: "app:\(url.path)",
          kind: .app,
-         title: name.hasSuffix(".app") ? String(name.dropLast(4)) : name,
+         title: title,
          subtitle: folder.hasPrefix(home) ? "~" + folder.dropFirst(home.count) : folder,
+         // The name on disk, which finds an app whose shown name is
+         // localized or otherwise differs.
+         keywords: file == title ? "" : file,
          trailing: "application",
          primary: .openApp(url),
          secondary: .reveal(url)
