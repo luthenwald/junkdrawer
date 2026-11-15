@@ -14,6 +14,9 @@ final class Settings {
    /// Where the panel was dragged to, by display UUID. A screen without an
    /// entry shows it centred.
    var positions = stored(.positions, default: [String: Spot]()) { didSet { store(positions, as: .positions) } }
+   /// How many seconds a hidden panel keeps its query and selection, 0 for
+   /// a panel that always opens empty.
+   var keepSeconds = stored(.keepState, default: 0) { didSet { store(keepSeconds, as: .keepState) } }
 
    var bookmarksURL: URL {
       bookmarksFile.map { URL(filePath: $0) } ?? BookmarksSource.defaultFile
@@ -46,6 +49,7 @@ private enum Key: String {
    case bookmarksFile = "BookmarksFile"
    case appFolders = "AppFolders"
    case positions = "Positions"
+   case keepState = "KeepState"
 }
 
 private func stored<Value: Decodable>(_ key: Key, default value: Value) -> Value {

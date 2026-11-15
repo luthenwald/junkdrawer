@@ -18,6 +18,13 @@ struct SettingsView: View {
                   Restore(isShown: settings.shortcut != .toggle) { _ = shortcut.change(to: .toggle) }
                }
                Toggle("Launch at login", isOn: Binding(get: { loginItem.isEnabled }, set: loginItem.set))
+               LabeledContent("Keep the query") {
+                  Text(settings.keepSeconds == 0 ? "Off" : "\(settings.keepSeconds) s")
+                     .monospacedDigit()
+                  Stepper("Keep the query", value: $settings.keepSeconds, in: 0...60)
+                     .labelsHidden()
+               }
+               .help("How long a hidden panel remembers its query, so a look-up is still there when you come back")
                LabeledContent("Panel position") {
                   Button("Reset") { settings.positions = [:] }
                      .disabled(settings.positions.isEmpty)

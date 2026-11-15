@@ -3,8 +3,9 @@ import JunkdrawerCore
 import os
 
 /// Shows and hides the panel, ranks the query and moves the selection. It
-/// opens empty on the screen under the pointer and hides on Esc, on focus
-/// loss, on the hotkey and after an action.
+/// opens on the screen under the pointer and hides on Esc, on focus loss,
+/// on the hotkey and after an action. It opens empty, unless the settings
+/// keep the query for a while and it comes back within that time.
 @MainActor
 final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// Where the panel's top edge sits, as a share of the visible height
@@ -38,6 +39,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    private enum WarmUp { case pending, running, done }
    private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
+   /// Clears a hidden panel once the time it keeps its query is over.
+   private var forgetting: Task<Void, Never>?
 
    init(usage: UsageStore, settings: Settings) {
       self.usage = usage
@@ -49,7 +52,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.onSecondary = { [unowned self] in run { $0.secondary } }
       panel.onTertiary = { [unowned self] in run(\.tertiary) }
       panel.onCommand = { [unowned self] command in
-         hide(handingBack: !command.opensWindow)
+         hide(handingBack: !command.opensWindow, keeping: false)
          perform(command.item, .command(command))
       }
    }
@@ -76,6 +79,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    func show() {
       let start = ContinuousClock.now
       endWarmUp()
+      forgetting?.cancel()
       place()
       panel.makeKeyAndOrderFront(nil)
       panel.makeFirstResponder(panel.query)
@@ -90,11 +94,13 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// Hiding the app hands the focus back, unless the settings window is
    /// open or a command is about to open it. The app counts as active while
-   /// the panel is key, also when another app is in front.
-   func hide(handingBack: Bool = true) {
+   /// the panel is key, also when another app is in front. With `keeping`
+   /// the query stays for as long as the settings say; an action never
+   /// keeps it.
+   func hide(handingBack: Bool = true, keeping: Bool = true) {
       guard panel.isVisible else { return }
       panel.orderOut(nil)
-      clear()
+      forget(after: keeping ? settings.keepSeconds : 0)
       guard handingBack, NSApp.isActive, !NSApp.windows.contains(where: { $0.isVisible && $0.canBecomeMain }) else { return }
       NSApp.hide(nil)
    }
@@ -155,8 +161,18 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       let isPick = if case .command(let command) = action { command.isPick } else { item.kind != .dictionary }
       let opensWindow = if case .command(let command) = action { command.opensWindow } else { false }
       if isPick { usage.record(item) }
-      hide(handingBack: !opensWindow)
+      hide(handingBack: !opensWindow, keeping: false)
       perform(item, action)
+   }
+
+   private func forget(after seconds: Int) {
+      forgetting?.cancel()
+      guard seconds > 0 else { return clear() }
+      forgetting = Task { [weak self] in
+         try? await Task.sleep(for: .seconds(seconds))
+         guard !Task.isCancelled else { return }
+         self?.clear()
+      }
    }
 
    private func clear() {
