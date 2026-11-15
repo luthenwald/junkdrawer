@@ -14,6 +14,26 @@ public struct Stats: Codable, Hashable, Sendable {
       self.items = items
    }
 
+   /// The format of `stats.json` and of the JSON export. A file without a
+   /// version is version 1; a file from a later format is not read.
+   public static let version = 1
+
+   private enum CodingKeys: String, CodingKey { case version, days, items }
+
+   public init(from decoder: any Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      try container.checkVersion(.version, atMost: Self.version)
+      days = try container.decode([String: [String: Int]].self, forKey: .days)
+      items = try container.decode([String: Int].self, forKey: .items)
+   }
+
+   public func encode(to encoder: any Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(Self.version, forKey: .version)
+      try container.encode(days, forKey: .days)
+      try container.encode(items, forKey: .items)
+   }
+
    /// With one more use of `item` on `day`.
    public func recording(_ item: Item, day: String) -> Stats {
       recording(id: item.id, kind: item.kind, day: day)
