@@ -11,13 +11,23 @@ final class DictionarySource {
    nonisolated static let completionLimit = 20
 
    private var task: Task<Void, Never>?
+   /// The look-up running off the main thread, or the last that did.
+   private var work: Task<[Lookup]?, Never>?
 
    /// Calls `then` on the main actor with what was found for `text`, unless
-   /// another look-up started in the meantime.
+   /// another look-up started in the meantime. Look-ups run one after
+   /// another, since nothing says the spell checker may be called from two
+   /// threads at once; a cancelled one ends at its next step.
    func lookUp(_ text: String, then: @escaping @MainActor ([Lookup]) -> Void) {
       task?.cancel()
+      let previous = work
+      let work = Task.detached(priority: .userInitiated) { () -> [Lookup]? in
+         _ = await previous?.value
+         return Task.isCancelled ? nil : Self.lookups(text)
+      }
+      self.work = work
       task = Task {
-         let found = await Task.detached(priority: .userInitiated) { Self.lookups(text) }.value
+         let found = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
          guard !Task.isCancelled, let found else { return }
          then(found)
       }
