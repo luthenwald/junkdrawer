@@ -38,7 +38,8 @@ struct Effects {
       case .reveal(let url):
          NSWorkspace.shared.activateFileViewerSelecting([url])
       case .openURL(let url):
-         if !NSWorkspace.shared.open(url) { Logger.app.error("opening \(url.absoluteString, privacy: .public) failed") }
+         // Without the URL, which may be a bookmark.
+         if !NSWorkspace.shared.open(url) { Logger.app.error("opening a \(url.scheme ?? "", privacy: .public) URL failed") }
       case .copy(let string):
          NSPasteboard.general.clearContents()
          NSPasteboard.general.setString(string, forType: .string)
@@ -60,7 +61,7 @@ struct Effects {
          guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
                let url = URL(string: "dict://" + encoded), NSWorkspace.shared.open(url)
          else {
-            Logger.app.error("opening \(word, privacy: .public) in Dictionary failed")
+            Logger.app.error("opening a word in Dictionary failed")
             break
          }
       case .setQuery:
