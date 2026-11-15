@@ -27,7 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       // No Dock icon and no visible menu bar, also when run as a bare binary.
       NSApp.setActivationPolicy(.accessory)
 
-      let panel = PanelController(usage: UsageStore(), settings: settings)
+      let usage = UsageStore()
+      let stats = StatsStore(seed: usage.usage)
+      let panel = PanelController(usage: usage, stats: stats, settings: settings)
       let library = Library(settings: settings) { index, icons in panel.update(index: index, icons: icons) }
       let shortcut = GlobalShortcut(settings: settings) { panel.toggle() }
       let settingsWindow = SettingsWindow(settings: settings, loginItem: loginItem, shortcut: shortcut)

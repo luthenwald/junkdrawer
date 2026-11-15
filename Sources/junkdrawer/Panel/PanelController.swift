@@ -18,6 +18,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    var notify: (String) -> Void = { _ in }
    private let panel = LauncherPanel()
    private let usage: UsageStore
+   private let stats: StatsStore
    private let settings: Settings
    private let dictionary = DictionarySource()
    /// The screen the panel last showed on, for the confirmation line.
@@ -43,9 +44,13 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    private var selection = Selection(count: 0, visible: LauncherPanel.visibleRows)
    /// Clears a hidden panel once the time it keeps its query is over.
    private var forgetting: Task<Void, Never>?
+   /// The entry last counted as a look-up, so one that stays on screen, or
+   /// comes back with a kept query, counts once.
+   private var countedLookup: String?
 
-   init(usage: UsageStore, settings: Settings) {
+   init(usage: UsageStore, stats: StatsStore, settings: Settings) {
       self.usage = usage
+      self.stats = stats
       self.settings = settings
       super.init()
       panel.delegate = self
@@ -55,6 +60,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.onTertiary = { [unowned self] in run(\.tertiary) }
       panel.onHide = { [unowned self] in hideSelected() }
       panel.onCommand = { [unowned self] command in
+         self.stats.record(command.item)
          hide(handingBack: !command.opensWindow, keeping: false)
          perform(command.item, .command(command))
       }
@@ -103,6 +109,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    func hide(handingBack: Bool = true, keeping: Bool = true) {
       guard panel.isVisible else { return }
       panel.orderOut(nil)
+      countLookup()
       forget(after: keeping ? settings.keepSeconds : 0)
       guard handingBack, NSApp.isActive, !NSApp.windows.contains(where: { $0.isVisible && $0.canBecomeMain }) else { return }
       NSApp.hide(nil)
@@ -126,6 +133,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    }
 
    func controlTextDidChange(_ notification: Notification) {
+      countedLookup = nil
       refresh(keeping: nil)
    }
 
@@ -150,7 +158,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    }
 
    /// Records the pick, then hides, so an app that opens comes to the front
-   /// over nothing. Dictionary look-ups and some commands are not picks. The
+   /// over nothing. Dictionary look-ups and some commands are not picks,
+   /// though the statistics count them: a look-up as the panel hides. The
    /// Define row sets the query instead and keeps the panel open. A row
    /// without the action that was asked for does nothing.
    private func run(_ pick: (Item) -> Action?) {
@@ -164,6 +173,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       let isPick = if case .command(let command) = action { command.isPick } else { item.kind != .dictionary }
       let opensWindow = if case .command(let command) = action { command.opensWindow } else { false }
       if isPick { usage.record(item) }
+      if item.kind != .dictionary { stats.record(item) }
       hide(handingBack: !opensWindow, keeping: false)
       perform(item, action)
    }
@@ -177,6 +187,15 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       guard item.isHideable else { return }
       settings.hidden[item.id] = item.title
       notify("hid \(item.title) · restore it in Settings")
+   }
+
+   /// Counts the dictionary entry on screen as a look-up, once.
+   private func countLookup() {
+      guard showsLookup, rows.indices.contains(selection.index) else { return }
+      let item = rows[selection.index].item
+      guard definitions[item.id] != nil, item.id != countedLookup else { return }
+      countedLookup = item.id
+      stats.record(item)
    }
 
    private func forget(after seconds: Int) {
@@ -195,6 +214,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// With the caret at the end, as if typed.
    private func setQuery(_ text: String) {
+      countedLookup = nil
       panel.query.stringValue = text
       panel.query.currentEditor()?.selectedRange = NSRange(location: (text as NSString).length, length: 0)
       refresh(keeping: nil)

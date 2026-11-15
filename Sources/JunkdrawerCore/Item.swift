@@ -15,7 +15,7 @@ public enum Action: Hashable, Sendable {
 
 /// Where an item comes from, which decides its left cell and small
 /// ranking differences.
-public enum Kind: Hashable, Sendable {
+public enum Kind: String, Hashable, Sendable, CaseIterable {
    case app
    case bookmark
    case latex
