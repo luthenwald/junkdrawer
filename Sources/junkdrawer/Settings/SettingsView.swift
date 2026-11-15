@@ -49,6 +49,24 @@ struct SettingsView: View {
                   .font(.caption)
                   .foregroundStyle(.secondary)
             }
+            Section {
+               ForEach(settings.hidden.sorted { $0.value.localizedStandardCompare($1.value) == .orderedAscending }, id: \.key) { id, title in
+                  HStack {
+                     Text(title)
+                     Spacer()
+                     Button { settings.hidden[id] = nil } label: { Image(systemName: "arrow.uturn.backward.circle") }
+                        .buttonStyle(.borderless)
+                        .help("Show again")
+                  }
+               }
+               if settings.hidden.isEmpty { Text("None").foregroundStyle(.secondary) }
+            } header: {
+               Text("Hidden items")
+            } footer: {
+               Text("⌘H on an app or a settings pane in the panel hides it.")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+            }
             Section("Bookmarks file") {
                HStack {
                   PathText(settings.bookmarksURL.path)

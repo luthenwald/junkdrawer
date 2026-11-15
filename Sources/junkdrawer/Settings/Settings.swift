@@ -17,6 +17,9 @@ final class Settings {
    /// How many seconds a hidden panel keeps its query and selection, 0 for
    /// a panel that always opens empty.
    var keepSeconds = stored(.keepState, default: 0) { didSet { store(keepSeconds, as: .keepState) } }
+   /// The apps and settings panes hidden from the list, by item id, with
+   /// their titles for the settings window.
+   var hidden = stored(.hidden, default: [String: String]()) { didSet { store(hidden, as: .hidden) } }
 
    var bookmarksURL: URL {
       bookmarksFile.map { URL(filePath: $0) } ?? BookmarksSource.defaultFile
@@ -50,6 +53,7 @@ private enum Key: String {
    case appFolders = "AppFolders"
    case positions = "Positions"
    case keepState = "KeepState"
+   case hidden = "Hidden"
 }
 
 private func stored<Value: Decodable>(_ key: Key, default value: Value) -> Value {

@@ -62,6 +62,12 @@ public struct Item: Identifiable, Hashable, Sendable {
    }
 }
 
+extension Item {
+   /// Whether the user can hide the row for good. Apps and settings panes
+   /// come from the system as they are; bookmarks are edited in their file.
+   public var isHideable: Bool { kind == .app || kind == .setting }
+}
+
 /// An item as ranked for a query, with the title's matched characters.
 public struct Row: Hashable, Sendable {
    public let item: Item

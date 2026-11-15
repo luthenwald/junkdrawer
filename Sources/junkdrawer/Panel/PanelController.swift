@@ -14,6 +14,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// Carries out an action of a row, after the panel hid.
    var perform: (Item, Action) -> Void = { _, _ in }
+   /// Shows a line about something the panel did itself.
+   var notify: (String) -> Void = { _ in }
    private let panel = LauncherPanel()
    private let usage: UsageStore
    private let settings: Settings
@@ -51,6 +53,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.onCancel = { [unowned self] in hide() }
       panel.onSecondary = { [unowned self] in run { $0.secondary } }
       panel.onTertiary = { [unowned self] in run(\.tertiary) }
+      panel.onHide = { [unowned self] in hideSelected() }
       panel.onCommand = { [unowned self] command in
          hide(handingBack: !command.opensWindow, keeping: false)
          perform(command.item, .command(command))
@@ -163,6 +166,17 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       if isPick { usage.record(item) }
       hide(handingBack: !opensWindow, keeping: false)
       perform(item, action)
+   }
+
+   /// Hides the selected app or settings pane from the list until it is
+   /// restored in the settings. The panel stays open, and the library
+   /// publishes the list without it.
+   private func hideSelected() {
+      guard rows.indices.contains(selection.index) else { return }
+      let item = rows[selection.index].item
+      guard item.isHideable else { return }
+      settings.hidden[item.id] = item.title
+      notify("hid \(item.title) · restore it in Settings")
    }
 
    private func forget(after seconds: Int) {

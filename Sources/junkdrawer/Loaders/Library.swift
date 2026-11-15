@@ -3,8 +3,9 @@ import Foundation
 import JunkdrawerCore
 
 /// Everything the panel can list: apps, bookmarks, the built-in commands,
-/// the System Settings panes and the symbol table, published together whenever a source changes.
-/// The app folders and the bookmarks file follow the settings.
+/// the System Settings panes and the symbol table, published together
+/// whenever a source changes. The app folders, the bookmarks file and the
+/// hidden items follow the settings.
 @MainActor
 final class Library {
    private let settings: Settings
@@ -42,6 +43,10 @@ final class Library {
             push()
          }
       }
+      track { [unowned self] in
+         _ = settings.hidden
+         push()
+      }
    }
 
    var bookmarksFile: URL { settings.bookmarksURL }
@@ -56,6 +61,7 @@ final class Library {
    }
 
    private func push() {
-      publish(Index(items: apps + bookmarks + Command.items + SystemSettings.items, symbols: symbols), icons)
+      let index = Index(items: apps + bookmarks + Command.items + SystemSettings.items, symbols: symbols)
+      publish(index.hiding(Set(settings.hidden.keys)), icons)
    }
 }

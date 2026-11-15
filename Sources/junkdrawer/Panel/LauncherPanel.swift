@@ -17,6 +17,8 @@ final class LauncherPanel: NSPanel {
    var onTertiary: () -> Void = {}
    /// The commands with a key equivalent, as in apps with a menu.
    var onCommand: (Command) -> Void = { _ in }
+   /// ⌘H, which hides the selected row for good.
+   var onHide: () -> Void = {}
    let query = QueryField()
    private let details = Details()
    var list: ResultList { details.list }
@@ -150,6 +152,10 @@ final class LauncherPanel: NSPanel {
             onTertiary()
             return true
          }
+      }
+      if modifiers == .command, Int(event.keyCode) == kVK_ANSI_H {
+         onHide()
+         return true
       }
       if modifiers == .command, let command = Self.commands[Int(event.keyCode)] {
          onCommand(command)

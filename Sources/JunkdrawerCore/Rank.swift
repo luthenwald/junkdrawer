@@ -10,6 +10,12 @@ public struct Index: Sendable {
       self.items = items
       self.symbols = symbols
    }
+
+   /// Without the hideable items among `ids`, which also takes them out of
+   /// the recent list.
+   public func hiding(_ ids: Set<String>) -> Index {
+      ids.isEmpty ? self : Index(items: items.filter { !($0.isHideable && ids.contains($0.id)) }, symbols: symbols)
+   }
 }
 
 /// How many recent picks an empty query lists.

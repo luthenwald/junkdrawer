@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
          let outcome = effects.perform(action)
          if let text = item.confirmation(for: action, outcome: outcome) { confirmation.show(text, on: panel.screen) }
       }
+      panel.notify = { [unowned panel] text in confirmation.show(text, on: panel.screen) }
       self.library = library
       self.settingsWindow = settingsWindow
       track { [settings] in NSApp.appearance = settings.appearance.nsAppearance }
