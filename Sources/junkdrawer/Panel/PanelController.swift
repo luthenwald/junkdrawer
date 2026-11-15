@@ -87,6 +87,9 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
    /// was in front, and hiding needs no focus hand-back.
    func show() {
       let start = ContinuousClock.now
+      // A warm-up that has not started yet is skipped: it would draw over
+      // the panel the user just opened and replace the query.
+      if warmUp == .pending { warmUp = .done }
       endWarmUp()
       forgetting?.cancel()
       place()
