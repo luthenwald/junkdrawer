@@ -8,8 +8,8 @@ enum Recording {
 }
 
 /// A button that shows a shortcut and, once clicked, records the next key
-/// combination typed. Esc cancels, and Delete removes the shortcut when it
-/// may be left empty. The global shortcut is released while recording, so
+/// combination typed. Esc cancels, as does leaving the window, and Delete
+/// removes the shortcut when it may be left empty. The global shortcut is released while recording, so
 /// typing it is recorded too.
 struct ShortcutRecorder: View {
    let current: Shortcut?
@@ -39,6 +39,10 @@ struct ShortcutRecorder: View {
          .help(clearable ? "Esc cancels, Delete removes the shortcut" : "Esc cancels")
       }
       .onDisappear { stop(.cancelled) }
+      // Leaving the window ends a recording too, by switching to another
+      // app or by closing it; the global shortcut would stay released.
+      .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in stop(.cancelled) }
+      .onReceive(NotificationCenter.default.publisher(for: NSWindow.willCloseNotification)) { _ in stop(.cancelled) }
    }
 
    private func start() {
