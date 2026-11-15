@@ -3,8 +3,8 @@ import JunkdrawerCore
 import os
 
 /// The picks behind frecency and the recent list, kept in `usage.json`.
-/// A missing file means no picks yet; a broken one is logged and replaced
-/// on the next pick.
+/// A missing file means no picks yet, and so does a broken one, which is
+/// kept as `usage.json.broken`.
 @MainActor
 final class UsageStore {
    nonisolated static let defaultFile = FileManager.default.homeDirectoryForCurrentUser
@@ -16,7 +16,7 @@ final class UsageStore {
 
    init(file: URL = defaultFile) {
       self.file = file
-      usage = Self.load(file)
+      usage = StoreFile.load(file, dates: .iso8601) ?? Usage()
    }
 
    func record(_ item: Item, at date: Date = Date()) {
@@ -26,18 +26,6 @@ final class UsageStore {
       write = Task.detached {
          await previous?.value
          Self.save(usage, to: file)
-      }
-   }
-
-   private static func load(_ file: URL) -> Usage {
-      guard let data = try? Data(contentsOf: file) else { return Usage() }
-      let decoder = JSONDecoder()
-      decoder.dateDecodingStrategy = .iso8601
-      do {
-         return try decoder.decode(Usage.self, from: data)
-      } catch {
-         Logger.app.error("reading usage.json failed: \(error.localizedDescription, privacy: .public)")
-         return Usage()
       }
    }
 

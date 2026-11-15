@@ -4,8 +4,8 @@ import Observation
 import os
 
 /// The counts behind the statistics window, kept in `stats.json`. A missing
-/// file starts from the picks that `usage.json` remembers; a broken one is
-/// logged and replaced on the next use.
+/// file starts from the picks that `usage.json` remembers, and so does a
+/// broken one, which is kept as `stats.json.broken`.
 @MainActor @Observable
 final class StatsStore {
    nonisolated static let defaultFile = FileManager.default.homeDirectoryForCurrentUser
@@ -17,7 +17,7 @@ final class StatsStore {
 
    init(file: URL = defaultFile, seed: Usage = Usage()) {
       self.file = file
-      stats = Self.load(file) ?? .seeded(from: seed) { $0.statsDay }
+      stats = StoreFile.load(file) ?? .seeded(from: seed) { $0.statsDay }
    }
 
    func record(_ item: Item, at date: Date = Date()) {
@@ -40,16 +40,6 @@ final class StatsStore {
       let encoder = JSONEncoder()
       encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
       return try encoder.encode(stats)
-   }
-
-   private static func load(_ file: URL) -> Stats? {
-      guard let data = try? Data(contentsOf: file) else { return nil }
-      do {
-         return try JSONDecoder().decode(Stats.self, from: data)
-      } catch {
-         Logger.app.error("reading stats.json failed: \(error.localizedDescription, privacy: .public)")
-         return Stats()
-      }
    }
 }
 
