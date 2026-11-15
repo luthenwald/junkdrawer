@@ -55,14 +55,23 @@ https://codeberg.org Codeberg #git #forge
 
 ## Building
 
-Needs the Command Line Tools and `just`.
-
-The Unicode, CLDR and LaTeX tables in `data/` are committed with their licences; `data/README.md` says where each comes from.
+Needs the Command Line Tools.
 
 ```sh
-just data     # download the Unicode and LaTeX tables again
-just gen      # write Resources/symbols.tsv
-just install  # build, sign and copy to /Applications
+./bundle.sh                                # build and sign build/Junkdrawer.app
+pkill -x Junkdrawer                        # quit a running copy, if there is one
+rm -rf /Applications/Junkdrawer.app
+cp -R build/Junkdrawer.app /Applications/
+open /Applications/Junkdrawer.app
+```
+
+`bundle.sh` signs with a code-signing certificate named `junkdrawer local` when your keychain has one. You can make it in Keychain Access, under Certificate Assistant, Create a Certificate, with the type Code Signing. Without it the app is signed ad hoc, and macOS asks for the Accessibility access again after every build.
+
+The Unicode, CLDR and LaTeX tables in `data/` are committed with their licences, and so is the symbol table made from them; `data/README.md` says where each comes from. To fetch them again and rebuild the table:
+
+```sh
+./data/fetch.sh                            # download the Unicode and LaTeX tables
+swift run gen data Resources/symbols.tsv   # write the symbol table
 ```
 
 ## Uninstalling

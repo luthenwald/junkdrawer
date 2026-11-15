@@ -1,6 +1,6 @@
 # Data
 
-The source files for the symbol table, as downloaded by `fetch.sh`. `VERSION` records when they were fetched and which versions they are. `just gen` turns them into `Resources/symbols.tsv`. The files are kept exactly as downloaded.
+The source files for the symbol table, as downloaded by `fetch.sh`. `VERSION` records when they were fetched and which versions they are. `swift run gen data Resources/symbols.tsv`, run from the repository root, turns them into `Resources/symbols.tsv`. The files are kept exactly as downloaded.
 
 | File | From | Licence |
 | --- | --- | --- |
