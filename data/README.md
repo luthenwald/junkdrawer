@@ -11,3 +11,5 @@ The source files for the symbol table, as downloaded by `fetch.sh`. `VERSION` re
 | `unimathsymbols.txt` | Günter Milde's table of Unicode characters and LaTeX math commands, see below | LPPL 1.3 or later, `LPPL-1.3c.txt` |
 
 `unimathsymbols.txt` was published at http://milde.users.sourceforge.net/LUCR/Math/data/unimathsymbols.txt, which no longer serves it. The copy here comes from https://github.com/mmarchywka/toobib at commit `325724d1a300aef4a696ffefae6d95bfd192a44f`, which keeps the file with its original header, copyright notice and licence statement. `fetch.sh` checks its SHA-256.
+
+`unicode-math-table.tex` comes from CTAN, which serves only the current release of the package. `fetch.sh` checks its SHA-256 as well, so a newer table is taken only once the hash there is changed.

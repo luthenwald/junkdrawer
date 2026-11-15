@@ -11,6 +11,9 @@ CLDR_TAG=release-49
 # unmodified copy. Pinned by commit and checked by hash.
 TOOBIB_COMMIT=325724d1a300aef4a696ffefae6d95bfd192a44f
 UNIMATH_SHA256=55841895e75fa72d42e9a8533592b333990f90ded7903cee521c9e4f8693aa9d
+# CTAN serves only the current unicode-math, so the table is checked by hash
+# too; a new release fails here until the hash is updated on purpose.
+UNICODE_MATH_SHA256=3976ff8f39c84b61055b1cb6851a1b2cfdefa918a2a642c954e6ceafdca7277e
 
 UCD="https://www.unicode.org/Public/$UCD_VERSION"
 CLDR="https://raw.githubusercontent.com/unicode-org/cldr/$CLDR_TAG/common"
@@ -32,6 +35,7 @@ fetch "https://raw.githubusercontent.com/mmarchywka/toobib/$TOOBIB_COMMIT/unimat
 fetch https://www.latex-project.org/lppl/lppl-1-3c.txt LPPL-1.3c.txt
 
 echo "$UNIMATH_SHA256  unimathsymbols.txt" | shasum -a 256 -c -
+echo "$UNICODE_MATH_SHA256  unicode-math-table.tex" | shasum -a 256 -c -
 
 {
    echo "fetched $(date -u +%Y-%m-%d)"
