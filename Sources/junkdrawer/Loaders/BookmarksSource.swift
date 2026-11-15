@@ -13,7 +13,7 @@ final class BookmarksSource {
    private let publish: ([Item]) -> Void
    private var read: Task<Void, Never>?
    private var watcher: FolderWatcher?
-   private var watched: String?
+   private var watched: [String] = []
 
    init(file: URL = defaultFile, publish: @escaping ([Item]) -> Void) {
       self.file = file
@@ -40,15 +40,17 @@ final class BookmarksSource {
    }
 
    /// The file's folder once it exists, its parent until then, so creating
-   /// the folder is noticed too.
+   /// the folder is noticed too. A file that is a link, as one kept in a
+   /// dotfiles folder, is watched where it really is as well.
    private func watch() {
       let folder = file.deletingLastPathComponent()
-      let target = [folder, folder.deletingLastPathComponent()]
-         .map(\.path)
-         .first { FileManager.default.fileExists(atPath: $0) }
-      guard let target, target != watched else { return }
-      watched = target
-      watcher = FolderWatcher(paths: [target]) { [unowned self] in reload() }
+      let real = file.resolvingSymlinksInPath().deletingLastPathComponent()
+      let exists = { (path: String) in FileManager.default.fileExists(atPath: path) }
+      let own = [folder, folder.deletingLastPathComponent()].map(\.path).first(where: exists)
+      let targets = [own, real.path == folder.path || !exists(real.path) ? nil : real.path].compactMap { $0 }
+      guard !targets.isEmpty, targets != watched else { return }
+      watched = targets
+      watcher = FolderWatcher(paths: targets) { [unowned self] in reload() }
    }
 
    nonisolated private static func load(_ file: URL) -> [Item] {
