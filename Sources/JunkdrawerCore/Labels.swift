@@ -17,6 +17,9 @@ extension Item {
    /// What ⌘↵ does, after its key in the footer.
    public var secondaryHint: String { hint(secondary) }
 
+   /// What ⇧⌘↵ does, for a row that has a third action.
+   public var tertiaryHint: String? { tertiary.map(hint) }
+
    private func hint(_ action: Action) -> String {
       switch (kind, action) {
       case (_, .openApp): "open"
@@ -25,6 +28,7 @@ extension Item {
       case (_, .openURL): "open in default browser"
       case (_, .insert): "insert \(shown)"
       case (.bookmark, .copy): "copy url"
+      case (.dictionary, .copy(title)): "copy word"
       case (.dictionary, .copy): "copy definition"
       case (_, .copy(let string)): "copy \(string)"
       case (_, .openDefinition): "open in Dictionary"
@@ -47,7 +51,9 @@ extension Item {
       case .reveal(let url): "revealed \(url.lastPathComponent) in Finder"
       case .openURL: kind == .setting ? "opened \(title) in System Settings" : "opened \(subtitle) in the default browser"
       case .insert: "inserted \(shown)"
-      case .copy(let string): kind == .dictionary ? "copied the definition of “\(title)”" : "copied \(string)"
+      case .copy(let string) where kind == .dictionary:
+         string == title ? "copied “\(title)”" : "copied the definition of “\(title)”"
+      case .copy(let string): "copied \(string)"
       case .openDefinition: "opened “\(title)” in Dictionary"
       case .setQuery: nil
       case .command(.reload): "reloaded apps and bookmarks"

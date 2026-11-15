@@ -59,7 +59,8 @@ public func dictionaryRows(_ query: String, _ lookups: [Lookup]) -> (rows: [Row]
          subtitle: entry.source == .guess ? "did you mean · \(found.summary)" : found.summary,
          trailing: "",
          primary: .openDefinition(found.headword),
-         secondary: .copy(found.plainText)
+         secondary: .copy(found.headword),
+         tertiary: .copy(found.plainText)
       )
       let matched = found.headword.lowercased().hasPrefix(lowered) ? Array(0..<query.count) : []
       return Row(item: item, matched: matched, score: 0)

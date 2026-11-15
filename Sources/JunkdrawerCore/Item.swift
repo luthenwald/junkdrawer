@@ -42,10 +42,12 @@ public struct Item: Identifiable, Hashable, Sendable {
    public let trailing: String
    public let primary: Action
    public let secondary: Action
+   /// What ⇧⌘↵ does, for the few rows with a third action.
+   public let tertiary: Action?
 
    public init(
       id: String, kind: Kind, title: String, subtitle: String, keywords: String = "",
-      glyph: String? = nil, trailing: String, primary: Action, secondary: Action
+      glyph: String? = nil, trailing: String, primary: Action, secondary: Action, tertiary: Action? = nil
    ) {
       self.id = id
       self.kind = kind
@@ -56,6 +58,7 @@ public struct Item: Identifiable, Hashable, Sendable {
       self.trailing = trailing
       self.primary = primary
       self.secondary = secondary
+      self.tertiary = tertiary
    }
 }
 

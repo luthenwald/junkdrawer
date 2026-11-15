@@ -46,7 +46,8 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       panel.delegate = self
       panel.query.delegate = self
       panel.onCancel = { [unowned self] in hide() }
-      panel.onSecondary = { [unowned self] in run(\.secondary) }
+      panel.onSecondary = { [unowned self] in run { $0.secondary } }
+      panel.onTertiary = { [unowned self] in run(\.tertiary) }
       panel.onCommand = { [unowned self] command in
          hide(handingBack: !command.opensWindow)
          perform(command.item, .command(command))
@@ -126,7 +127,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       switch selector {
       case #selector(NSResponder.moveDown(_:)): move(by: 1)
       case #selector(NSResponder.moveUp(_:)): move(by: -1)
-      case #selector(NSResponder.insertNewline(_:)): run(\.primary)
+      case #selector(NSResponder.insertNewline(_:)): run { $0.primary }
       case #selector(NSResponder.cancelOperation(_:)):
          if panel.query.stringValue.isEmpty { hide() } else { clear() }
       default: return false
@@ -141,11 +142,12 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
 
    /// Records the pick, then hides, so an app that opens comes to the front
    /// over nothing. Dictionary look-ups and some commands are not picks. The
-   /// Define row sets the query instead and keeps the panel open.
-   private func run(_ key: KeyPath<Item, Action>) {
+   /// Define row sets the query instead and keeps the panel open. A row
+   /// without the action that was asked for does nothing.
+   private func run(_ pick: (Item) -> Action?) {
       guard rows.indices.contains(selection.index) else { return }
       let item = rows[selection.index].item
-      let action = item[keyPath: key]
+      guard let action = pick(item) else { return }
       if case .setQuery(let text) = action {
          setQuery(text)
          return
@@ -252,6 +254,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       let current = rows.indices.contains(selection.index) ? rows[selection.index].item : nil
       let hints: [(key: String, action: String)] = current.map { item in
          [("↵", item.primaryHint)] + (item.secondary == item.primary ? [] : [("⌘↵", item.secondaryHint)])
+            + (item.tertiaryHint.map { [("⇧⌘↵", $0)] } ?? [])
       } ?? []
       panel.footer.show(mode: Query(raw).label, counter: selection.counter, hints: hints + [("esc", raw.isEmpty ? "close" : "clear")])
       let definition = current.flatMap { definitions[$0.id] }

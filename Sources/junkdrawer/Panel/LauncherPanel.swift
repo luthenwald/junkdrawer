@@ -13,6 +13,8 @@ final class LauncherPanel: NSPanel {
    var onCancel: () -> Void = {}
    /// ⌘↵, which the field editor does not pass on as a command.
    var onSecondary: () -> Void = {}
+   /// ⇧⌘↵.
+   var onTertiary: () -> Void = {}
    /// The commands with a key equivalent, as in apps with a menu.
    var onCommand: (Command) -> Void = { _ in }
    let query = QueryField()
@@ -139,9 +141,15 @@ final class LauncherPanel: NSPanel {
 
    override func performKeyEquivalent(with event: NSEvent) -> Bool {
       let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
-      if modifiers == .command, [kVK_Return, kVK_ANSI_KeypadEnter].contains(Int(event.keyCode)) {
-         onSecondary()
-         return true
+      if [kVK_Return, kVK_ANSI_KeypadEnter].contains(Int(event.keyCode)) {
+         if modifiers == .command {
+            onSecondary()
+            return true
+         }
+         if modifiers == [.command, .shift] {
+            onTertiary()
+            return true
+         }
       }
       if modifiers == .command, let command = Self.commands[Int(event.keyCode)] {
          onCommand(command)
