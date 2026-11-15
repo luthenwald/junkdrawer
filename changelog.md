@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## A keyboard launcher for apps, bookmarks, symbols and words
+
+0.1.0 · 2026-11-15 · `lyxrmktr::xtktmopy`
+
 - New: ⌘Space opens a search field that finds your apps as you type, with their icons in gray, and ↵ opens the selected one.
 - New: ⌘↵ shows the selected app in Finder instead.
 - New: ↑ and ↓, or ⌃N and ⌃P, move through the results, and the footer shows what ↵ and ⌘↵ will do.
