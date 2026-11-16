@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed: Keychain Access and the other apps macOS keeps in its core services folder, such as Archive Utility and Ticket Viewer, now show up.
+
 ## A keyboard launcher for apps, bookmarks, symbols and words
 
 0.1.0 · 2026-11-15 · `lyxrmktr::xtktmopy`

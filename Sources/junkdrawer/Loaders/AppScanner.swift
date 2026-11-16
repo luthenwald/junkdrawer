@@ -12,6 +12,7 @@ enum AppScanner {
       "/Applications/Utilities",
       "/System/Applications",
       "/System/Applications/Utilities",
+      "/System/Library/CoreServices/Applications",
       "\(home)/Applications",
    ]
 
