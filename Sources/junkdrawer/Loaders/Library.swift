@@ -3,9 +3,9 @@ import Foundation
 import JunkdrawerCore
 
 /// Everything the panel can list: apps, bookmarks, the built-in commands,
-/// the System Settings panes and the symbol table, published together
-/// whenever a source changes. The app folders, the bookmarks file and the
-/// hidden items follow the settings.
+/// the System Settings panes, the symbol table and the files, published
+/// together whenever a source changes. The app folders, the bookmarks
+/// file, the file folders and the hidden items follow the settings.
 @MainActor
 final class Library {
    private let settings: Settings
@@ -13,10 +13,12 @@ final class Library {
    private var apps: [Item] = []
    private var bookmarks: [Item] = []
    private var symbols = Symbols()
+   private var files = Files()
    private var icons: [String: CGImage] = [:]
    private var appsSource: AppsSource?
    private var bookmarksSource: BookmarksSource?
    private var symbolsSource: SymbolsSource?
+   private var filesSource: FilesSource?
 
    init(
       settings: Settings, symbolsFile: URL? = SymbolsSource.defaultFile,
@@ -34,6 +36,11 @@ final class Library {
          push()
       }
       track { [unowned self] in appsSource?.folders = Self.appFolders(settings) }
+      filesSource = FilesSource(scope: Self.fileScope(settings)) { [unowned self] found in
+         files = found
+         push()
+      }
+      track { [unowned self] in filesSource?.scope = Self.fileScope(settings) }
       track { [unowned self] in
          let file = settings.bookmarksURL
          guard file != bookmarksSource?.file else { return }
@@ -55,13 +62,18 @@ final class Library {
       AppScanner.builtIn + settings.appFolders.filter { !AppScanner.builtIn.contains($0) }
    }
 
+   private static func fileScope(_ settings: Settings) -> FilesSource.Scope {
+      FilesSource.Scope(folders: settings.fileFolders, depth: settings.fileDepth)
+   }
+
    func reload() {
       appsSource?.reload()
       bookmarksSource?.reload()
+      filesSource?.reload()
    }
 
    private func push() {
-      let index = Index(items: apps + bookmarks + Command.items + SystemSettings.items, symbols: symbols)
+      let index = Index(items: apps + bookmarks + Command.items + SystemSettings.items, symbols: symbols, files: files)
       publish(index.hiding(Set(settings.hidden.keys)), icons)
    }
 }

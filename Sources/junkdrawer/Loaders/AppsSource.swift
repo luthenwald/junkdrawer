@@ -29,7 +29,7 @@ final class AppsSource {
    }
 
    private func watch() {
-      watcher = FolderWatcher(paths: folders) { [unowned self] in reload() }
+      watcher = FolderWatcher(paths: folders) { [unowned self] _ in reload() }
    }
 
    func reload() {

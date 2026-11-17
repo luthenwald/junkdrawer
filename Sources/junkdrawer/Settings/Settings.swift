@@ -11,6 +11,11 @@ final class Settings {
    var bookmarksFile = stored(.bookmarksFile, default: String?.none) { didSet { store(bookmarksFile, as: .bookmarksFile) } }
    /// Folders searched for apps besides the usual ones, as paths.
    var appFolders = stored(.appFolders, default: [String]()) { didSet { store(appFolders, as: .appFolders) } }
+   /// Folders searched by the `/` mode, as paths.
+   var fileFolders = stored(.fileFolders, default: [String]()) { didSet { store(fileFolders, as: .fileFolders) } }
+   /// How deep the `/` mode looks into those folders; their direct
+   /// contents are depth 1.
+   var fileDepth = stored(.fileDepth, default: 6) { didSet { store(fileDepth, as: .fileDepth) } }
    /// Where the panel was dragged to, by display UUID. A screen without an
    /// entry shows it centred.
    var positions = stored(.positions, default: [String: Spot]()) { didSet { store(positions, as: .positions) } }
@@ -51,6 +56,8 @@ private enum Key: String {
    case appearance = "Appearance"
    case bookmarksFile = "BookmarksFile"
    case appFolders = "AppFolders"
+   case fileFolders = "FileFolders"
+   case fileDepth = "FileDepth"
    case positions = "Positions"
    case keepState = "KeepState"
    case hidden = "Hidden"

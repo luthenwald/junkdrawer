@@ -50,7 +50,7 @@ final class BookmarksSource {
       let targets = [own, real.path == folder.path || !exists(real.path) ? nil : real.path].compactMap { $0 }
       guard !targets.isEmpty, targets != watched else { return }
       watched = targets
-      watcher = FolderWatcher(paths: targets) { [unowned self] in reload() }
+      watcher = FolderWatcher(paths: targets) { [unowned self] _ in reload() }
    }
 
    nonisolated private static func load(_ file: URL) -> [Item] {
