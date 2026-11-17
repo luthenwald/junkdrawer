@@ -51,6 +51,31 @@ struct SettingsView: View {
                   .foregroundStyle(.secondary)
             }
             Section {
+               ForEach(settings.fileFolders, id: \.self) { folder in
+                  HStack {
+                     PathText(folder)
+                     Spacer()
+                     Button { settings.fileFolders.removeAll { $0 == folder } } label: { Image(systemName: "minus.circle") }
+                        .buttonStyle(.borderless)
+                        .help("Remove")
+                  }
+               }
+               Button("Add Folder…", action: addFileFolder)
+               LabeledContent("Depth") {
+                  Text("\(settings.fileDepth)")
+                     .monospacedDigit()
+                  Stepper("Depth", value: $settings.fileDepth, in: 1...12)
+                     .labelsHidden()
+               }
+               .help("How many levels of folders to look into; a folder's own contents are level 1")
+            } header: {
+               Text("Files")
+            } footer: {
+               Text("Searched by names after /. Hidden names and build folders such as node_modules are left out.")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+            }
+            Section {
                // More than a few scroll in place, so the window keeps its height.
                if settings.hidden.count > Self.hiddenShown {
                   ScrollView {
@@ -88,6 +113,8 @@ struct SettingsView: View {
          .formStyle(.grouped)
          .scrollDisabled(true)
          .fixedSize(horizontal: false, vertical: true)
+         // Scrolls in place on a screen too short for it all.
+         .scrollIfTaller(than: Self.formLimit)
 
          HStack {
             if let version {
@@ -106,6 +133,12 @@ struct SettingsView: View {
    }
 
    private static let hiddenShown = 3
+
+   /// The form's height at most: the screen's, less the title bar, the
+   /// button row and some air.
+   private static var formLimit: CGFloat {
+      (NSScreen.main?.visibleFrame.height ?? 800) - 140
+   }
 
    @ViewBuilder private var hiddenRows: some View {
       ForEach(settings.hidden.sorted { $0.value.localizedStandardCompare($1.value) == .orderedAscending }, id: \.key) { id, title in
@@ -129,6 +162,18 @@ struct SettingsView: View {
       guard panel.runModal() == .OK else { return }
       let chosen = panel.urls.map(\.standardizedFileURL.path)
       settings.appFolders += chosen.filter { !settings.appFolders.contains($0) }
+   }
+
+   private func addFileFolder() {
+      let panel = NSOpenPanel()
+      panel.canChooseFiles = false
+      panel.canChooseDirectories = true
+      panel.allowsMultipleSelection = true
+      panel.message = "Choose folders to search after /."
+      panel.prompt = "Add"
+      guard panel.runModal() == .OK else { return }
+      let chosen = panel.urls.map(\.standardizedFileURL.path)
+      settings.fileFolders += chosen.filter { !settings.fileFolders.contains($0) }
    }
 
    private func chooseBookmarks() {
@@ -178,5 +223,17 @@ struct SettingsView: View {
    /// From the bundle, so a bare binary from `swift build` shows none.
    private var version: String? {
       Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+   }
+}
+
+extension View {
+   /// In a scroll view of at most `limit` points when the content is taller,
+   /// as it is.
+   func scrollIfTaller(than limit: CGFloat) -> some View {
+      ViewThatFits(in: .vertical) {
+         self
+         ScrollView { self }.frame(height: limit)
+      }
+      .frame(maxHeight: limit)
    }
 }
