@@ -4,6 +4,8 @@ import Foundation
 /// builds it.
 public enum Action: Hashable, Sendable {
    case openApp(URL)
+   /// A file or folder, in its default app.
+   case open(URL)
    case reveal(URL)
    case openURL(URL)
    case insert(String)
@@ -23,6 +25,7 @@ public enum Kind: String, Hashable, Sendable, CaseIterable {
    case dictionary
    case command
    case setting
+   case file
 }
 
 /// One thing the list can show.

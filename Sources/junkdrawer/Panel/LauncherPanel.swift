@@ -297,12 +297,12 @@ private final class QueryCell: NSTextFieldCell {
    }
 }
 
-/// The four prefixes, under the recent list.
+/// The five prefixes, under the recent list.
 private final class Legend: NSView {
    static let height: CGFloat = 36
    private static let inset: CGFloat = 18
    private static let mono = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
-   private static let entries = [("\\", "latex"), (":", "unicode"), ("?", "dictionary"), ("", "no prefix  apps and bookmarks")]
+   private static let entries = [("\\", "latex"), (":", "unicode"), ("?", "dictionary"), ("/", "files"), ("", "no prefix  apps and bookmarks")]
 
    private let label = NSTextField.line()
 

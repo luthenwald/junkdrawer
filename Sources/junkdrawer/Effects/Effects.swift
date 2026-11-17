@@ -35,6 +35,9 @@ struct Effects {
          NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration()) { _, error in
             if let error { Logger.app.error("opening \(url.path, privacy: .public) failed: \(error.localizedDescription, privacy: .public)") }
          }
+      case .open(let url):
+         // Without the path, which may say more than the log should.
+         if !NSWorkspace.shared.open(url) { Logger.app.error("opening a file failed") }
       case .reveal(let url):
          NSWorkspace.shared.activateFileViewerSelecting([url])
       case .openURL(let url):

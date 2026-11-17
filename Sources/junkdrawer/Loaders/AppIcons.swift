@@ -2,6 +2,7 @@ import AppKit
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import JunkdrawerCore
+import UniformTypeIdentifiers
 
 /// App icons without colour, as the grayscale design asks.
 enum AppIcons {
@@ -17,9 +18,27 @@ enum AppIcons {
       })
    }
 
+   /// Gray icons for file types, by type identifier, drawn the first time
+   /// a type shows, so a few dozen images serve every file.
+   @MainActor private static var types: [String: CGImage] = [:]
+
+   /// The gray icon of a file row's type: folder, or by its extension.
+   @MainActor static func type(of item: Item) -> CGImage? {
+      guard case .open(let url) = item.primary else { return nil }
+      let type = item.trailing == "folder" ? UTType.folder : UTType(filenameExtension: url.pathExtension) ?? .data
+      if let known = types[type.identifier] { return known }
+      let image = gray(NSWorkspace.shared.icon(for: type))
+      types[type.identifier] = image
+      return image
+   }
+
    private static func gray(_ url: URL) -> CGImage? {
       // Through the link, or the icon carries the alias arrow (Safari).
-      guard let icon = drawn(NSWorkspace.shared.icon(forFile: url.resolvingSymlinksInPath().path)) else { return nil }
+      gray(NSWorkspace.shared.icon(forFile: url.resolvingSymlinksInPath().path))
+   }
+
+   private static func gray(_ image: NSImage) -> CGImage? {
+      guard let icon = drawn(image) else { return nil }
       let filter = CIFilter.colorControls()
       filter.inputImage = CIImage(cgImage: icon)
       filter.saturation = 0

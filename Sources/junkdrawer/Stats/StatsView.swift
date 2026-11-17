@@ -10,7 +10,7 @@ struct StatsView: View {
    let store: StatsStore
    @State private var span = Span.month
 
-   private static let kinds: [Kind] = [.app, .bookmark, .command, .setting, .latex, .unicode, .dictionary]
+   private static let kinds: [Kind] = [.app, .bookmark, .file, .command, .setting, .latex, .unicode, .dictionary]
    private static let topLimit = 8
    private static let text = Color(nsColor: .text)
    private static let secondary = Color(nsColor: .secondary)

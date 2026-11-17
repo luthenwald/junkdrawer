@@ -98,6 +98,8 @@ public struct Stats: Codable, Hashable, Sendable {
          return scalars.isEmpty ? rest : String(String.UnicodeScalarView(scalars)) + "  U+" + rest.replacingOccurrences(of: "-", with: " U+")
       case .bookmark:
          return rest.replacing(/^https?:\/\//, with: "")
+      case .file:
+         return rest.split(separator: "/").last.map(String.init) ?? rest
       case .latex, .dictionary:
          return rest
       }
@@ -109,7 +111,7 @@ extension Kind {
    public init?(id: String) {
       let prefixes: [(String, Kind)] = [
          ("app:", .app), ("mark:", .bookmark), ("cmd:", .command), ("set:", .setting),
-         ("tex:", .latex), ("uni:", .unicode), ("dict:", .dictionary),
+         ("tex:", .latex), ("uni:", .unicode), ("dict:", .dictionary), ("file:", .file),
       ]
       guard let kind = prefixes.first(where: { id.hasPrefix($0.0) })?.1 else { return nil }
       self = kind
@@ -125,6 +127,7 @@ extension Kind {
       case .latex: "latex"
       case .unicode: "unicode"
       case .dictionary: "look-ups"
+      case .file: "files"
       }
    }
 }

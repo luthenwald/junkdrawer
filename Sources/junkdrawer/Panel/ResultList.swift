@@ -51,10 +51,12 @@ final class ResultList: NSView {
    }
 
    /// The gray icon for apps, the link for bookmarks, the book for the
-   /// dictionary, the gear for System Settings panes, nothing for commands.
+   /// dictionary, the gear for System Settings panes, the gray type icon for
+   /// files, nothing for commands.
    private static func icon(for item: Item, in icons: [String: CGImage]) -> NSImage? {
       switch item.kind {
       case .app: icons[item.id].map { NSImage(cgImage: $0, size: NSSize(width: 28, height: 28)) }
+      case .file: AppIcons.type(of: item).map { NSImage(cgImage: $0, size: NSSize(width: 28, height: 28)) }
       case .bookmark: link
       case .dictionary: book
       case .setting: gear

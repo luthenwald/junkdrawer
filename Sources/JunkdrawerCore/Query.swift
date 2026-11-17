@@ -6,6 +6,7 @@ public enum Mode: Hashable, Sendable, CaseIterable {
    case latex
    case unicode
    case dictionary
+   case files
 
    /// The character that selects the mode, or nil for the plain mode.
    public var prefix: Character? {
@@ -14,6 +15,7 @@ public enum Mode: Hashable, Sendable, CaseIterable {
       case .latex: "\\"
       case .unicode: ":"
       case .dictionary: "?"
+      case .files: "/"
       }
    }
 }

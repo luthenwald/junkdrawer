@@ -5,16 +5,19 @@ public struct Index: Sendable {
    /// Apps, bookmarks and commands, for the plain mode.
    public var items: [Item]
    public var symbols: Symbols
+   /// Files and folders, for the `/` mode only.
+   public var files: Files
 
-   public init(items: [Item] = [], symbols: Symbols = Symbols()) {
+   public init(items: [Item] = [], symbols: Symbols = Symbols(), files: Files = Files()) {
       self.items = items
       self.symbols = symbols
+      self.files = files
    }
 
    /// Without the hideable items among `ids`, which also takes them out of
    /// the recent list.
    public func hiding(_ ids: Set<String>) -> Index {
-      ids.isEmpty ? self : Index(items: items.filter { !($0.isHideable && ids.contains($0.id)) }, symbols: symbols)
+      ids.isEmpty ? self : Index(items: items.filter { !($0.isHideable && ids.contains($0.id)) }, symbols: symbols, files: files)
    }
 }
 
@@ -35,6 +38,10 @@ public func rows(for query: Query, in index: Index, usage: Usage, now: Date) -> 
       latexRows(query.text, in: index.symbols, usage: usage, now: now)
    case .unicode where !query.text.isEmpty:
       unicodeRows(query.text, in: index.symbols, usage: usage, now: now)
+   case .files where query.text.isEmpty:
+      recentFileRows(in: index.files, usage: usage)
+   case .files:
+      fileRows(query.text, in: index.files, usage: usage, now: now)
    case .latex, .unicode, .dictionary:
       []
    }
@@ -44,7 +51,7 @@ public func rows(for query: Query, in index: Index, usage: Usage, now: Date) -> 
 private func recentRows(in index: Index, usage: Usage) -> [Row] {
    let byID = Dictionary(index.items.map { ($0.id, $0) }) { first, _ in first }
    return usage.recent(limit: recentLimit)
-      .compactMap { byID[$0] ?? index.symbols.item(id: $0) }
+      .compactMap { byID[$0] ?? index.symbols.item(id: $0) ?? index.files.item(id: $0) }
       .map { Row(item: $0, matched: [], score: 0) }
 }
 

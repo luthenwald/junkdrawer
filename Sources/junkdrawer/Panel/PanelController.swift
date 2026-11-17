@@ -232,7 +232,7 @@ final class PanelController: NSObject, NSWindowDelegate, NSTextFieldDelegate {
       let query = Query(raw)
       guard query.mode == .dictionary else {
          dictionary.cancel()
-         show(JunkdrawerCore.rows(for: query, in: index, usage: usage.usage, now: Date()), [:], empty: raw.isEmpty ? "No recent picks" : "No matches", keeping: id)
+         show(JunkdrawerCore.rows(for: query, in: index, usage: usage.usage, now: Date()), [:], empty: raw.isEmpty ? "No recent picks" : query.mode == .files && query.text.isEmpty ? "No recent files" : "No matches", keeping: id)
          Logger.app.debug("\(query.label, privacy: .public), \(query.text.count, privacy: .public) characters: \(self.rows.count, privacy: .public) rows in \(start.millisecondsAgo, format: .fixed(precision: 1), privacy: .public) ms")
          return
       }

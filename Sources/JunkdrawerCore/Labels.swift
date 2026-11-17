@@ -6,6 +6,7 @@ extension Query {
       case .latex: "latex"
       case .unicode: "unicode"
       case .dictionary: "dictionary"
+      case .files: "files"
       }
    }
 }
@@ -22,12 +23,13 @@ extension Item {
 
    private func hint(_ action: Action) -> String {
       switch (kind, action) {
-      case (_, .openApp): "open"
+      case (_, .openApp), (_, .open): "open"
       case (_, .reveal): "reveal in Finder"
       case (.setting, .openURL): "open in System Settings"
       case (_, .openURL): "open in default browser"
       case (_, .insert): "insert \(shown)"
       case (.bookmark, .copy): "copy url"
+      case (.file, .copy): "copy path"
       case (.dictionary, .copy(title)): "copy word"
       case (.dictionary, .copy): "copy definition"
       case (_, .copy(let string)): "copy \(string)"
@@ -50,12 +52,13 @@ extension Item {
       default: break
       }
       return switch action {
-      case .openApp: "opened \(title)"
+      case .openApp, .open: "opened \(title)"
       case .reveal(let url): "revealed \(url.lastPathComponent) in Finder"
       case .openURL: kind == .setting ? "opened \(title) in System Settings" : "opened \(subtitle) in the default browser"
       case .insert: "inserted \(shown)"
       case .copy(let string) where kind == .dictionary:
          string == title ? "copied “\(title)”" : "copied the definition of “\(title)”"
+      case .copy where kind == .file: "copied the path of \(title)"
       case .copy(let string): "copied \(string)"
       case .openDefinition: "opened “\(title)” in Dictionary"
       case .setQuery: nil
