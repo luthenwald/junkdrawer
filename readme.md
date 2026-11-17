@@ -8,6 +8,7 @@ A minimal, keyboard-only launcher for macOS.
 - Opens apps, the panes of System Settings, and bookmarks from a plain text file in the default browser.
 - `\` searches LaTeX commands and `:` Unicode names, keywords and emoji; `↵` inserts the symbol into the app you were in.
 - `?` looks a word up in the macOS dictionary and shows its definition under the list; a one-word search also ends with a row that does this.
+- `/` finds files and folders by name in the folders you choose in Settings; `↵` opens one in its default app.
 - Remembers what you pick: frequent and recent picks rank higher, and an empty search lists your recent ones.
 - Has no menu. Reload data, Edit bookmarks, Show logs, Settings, Statistics and Quit junkdrawer are found and run like apps, and so are Sleep, Sleep displays, Lock screen, Log out, Restart, Shut down and Empty Trash. Restart, Shut down and Log out show the system's dialog first.
 - Can be dragged anywhere, and opens there again on that screen.
@@ -20,8 +21,8 @@ A minimal, keyboard-only launcher for macOS.
 | `⌘Space` | Show or hide the launcher |
 | `↑` `↓` / `⌃N` `⌃P` | Move the selection |
 | `↵` | Open, insert, or look up |
-| `⌘↵` | Reveal, copy the URL, copy the command or codepoint, copy the word |
-| `⇧⌘↵` | Copy the definition of a dictionary entry |
+| `⌘↵` | Reveal in Finder, copy the URL, copy the command or codepoint, copy the word |
+| `⇧⌘↵` | Copy the definition of a dictionary entry, or the path of a file |
 | `⌘H` | Hide the selected app or settings pane from the results |
 | `Esc` | Clear the query, then hide |
 | `⌘,` | Open Settings |
@@ -31,9 +32,11 @@ A minimal, keyboard-only launcher for macOS.
 
 ## Settings
 
-Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the bookmarks file, the appearance, and Reset for the launcher's position. Running Settings while its window is open on another Space opens it where you are.
+Settings holds the shortcut, launching at login, extra folders to search for apps (one level deep, like the Applications folders), the folders `/` searches for files, the bookmarks file, the appearance, and Reset for the launcher's position. Running Settings while its window is open on another Space opens it where you are.
 
 Keep the query sets how many seconds the launcher remembers its query after you hide it, up to 60. At Off, the default, it always opens empty. Running an action always leaves it empty.
+
+Under Files you choose the folders `/` searches and how many levels deep it looks, 6 by default. Names starting with a dot and build or dependency folders such as `node_modules`, `build`, `DerivedData`, `Pods`, `target`, `__pycache__` and `venv` are left out, and changes inside the folders show up within a second or two. macOS may ask once whether junkdrawer can read your Desktop, Documents or Downloads folder.
 
 Apps and settings panes you hid with `⌘H` are listed under Hidden items, each with a button that shows it again.
 

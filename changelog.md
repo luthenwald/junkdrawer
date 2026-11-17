@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- New: Type `/` to find files and folders by name in the folders you choose in Settings. `↵` opens one, `⌘↵` shows it in Finder and `⇧⌘↵` copies its path.
+- New: Settings has a Files section for those folders and how deep to look into them.
+- Improved: The Settings window scrolls when it is taller than your screen.
 - Fixed: Keychain Access and the other apps macOS keeps in its core services folder, such as Archive Utility and Ticket Viewer, now show up.
 
 ## A keyboard launcher for apps, bookmarks, symbols and words
