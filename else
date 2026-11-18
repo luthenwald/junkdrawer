@@ -1,0 +1,36 @@
+; the tasks of junkdrawer. `el` lists them.
+
+(task (build)
+  "Build a debug binary."
+  {swift build})
+
+(task (bundle)
+  "Build build/Junkdrawer.app, signed with the local identity when it exists."
+  {./bundle.sh})
+
+(task (run : bundle _quit)
+  "Quit a running Junkdrawer and open the freshly bundled app."
+  {open build/Junkdrawer.app})
+
+(task (install : bundle _quit)
+  "Replace /Applications/Junkdrawer.app with the bundled app and open it."
+  {rm -rf /Applications/Junkdrawer.app}
+  {cp -R build/Junkdrawer.app /Applications/}
+  {open /Applications/Junkdrawer.app})
+
+(task (data)
+  "Download the pinned Unicode, CLDR and LaTeX source files into data/."
+  {./data/fetch.sh})
+
+(task (gen)
+  "Write Resources/symbols.tsv from the files in data/."
+  {swift run gen data Resources/symbols.tsv})
+
+(task (log)
+  "Show recent log lines from the running app."
+  {log show --last 10m --predicate 'subsystem == "junkdrawer.junkdrawer"' --style compact})
+
+; opening the app while the old process is still exiting fails with error -600.
+(task (_quit)
+  "Quit a running Junkdrawer and wait until it is gone."
+  (script "sh" "pkill -x \"$1\" && while pgrep -x \"$1\" > /dev/null; do sleep 0.1; done || true" "Junkdrawer"))

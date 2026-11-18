@@ -1,6 +1,6 @@
 import Foundation
 
-// Writes the symbol table from the files in the data folder (`just gen`).
+// Writes the symbol table from the files in the data folder (`el gen`).
 // One line per entry, sorted by code points, tab separated:
 //
 //    string, name, aliases, keywords, commands, cell

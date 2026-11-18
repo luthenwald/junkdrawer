@@ -1,6 +1,6 @@
 #!/bin/sh
 # Downloads the source files for the symbol table into data/ and records what
-# was fetched in data/VERSION. Run from the repository root (`just data`).
+# was fetched in data/VERSION. Run from the repository root (`el data`).
 # The files are committed; see data/README.md for where each comes from.
 set -e
 cd "$(dirname "$0")"
