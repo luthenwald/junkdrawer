@@ -21,6 +21,15 @@ enum FileScanner {
       return path.dropFirst(root.count).split(separator: "/").contains(where: isSkipped)
    }
 
+   /// The path with every link followed, as FSEvents reports changes, or
+   /// nil for a path that does not exist. `resolvingSymlinksInPath` would
+   /// drop a leading `/private`, which FSEvents keeps.
+   static func real(_ path: String) -> String? {
+      guard let resolved = realpath(path, nil) else { return nil }
+      defer { free(resolved) }
+      return String(cString: resolved)
+   }
+
    /// Everything under `roots` down to `depth`, each path once. A package
    /// such as an app is one entry and is not entered. A cancelled scan
    /// returns early with what it has, which the caller drops.

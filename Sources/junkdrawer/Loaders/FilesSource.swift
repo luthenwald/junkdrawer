@@ -34,8 +34,11 @@ final class FilesSource {
 
    private func watch() {
       let folders = scope.folders
+      // Changes come with real paths, which differ from a folder chosen
+      // through a link.
+      let roots = folders + folders.compactMap(FileScanner.real).filter { !folders.contains($0) }
       watcher = folders.isEmpty ? nil : FolderWatcher(paths: folders) { [unowned self] changed in
-         guard !changed.allSatisfy({ FileScanner.isIgnored($0, roots: folders) }) else { return }
+         guard !changed.allSatisfy({ FileScanner.isIgnored($0, roots: roots) }) else { return }
          reload()
       }
    }
