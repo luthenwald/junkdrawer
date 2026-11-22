@@ -22,7 +22,8 @@ enum FileScanner {
    }
 
    /// Everything under `roots` down to `depth`, each path once. A package
-   /// such as an app is one entry and is not entered.
+   /// such as an app is one entry and is not entered. A cancelled scan
+   /// returns early with what it has, which the caller drops.
    static func scan(_ roots: [String], depth: Int) -> [FileEntry] {
       let start = ContinuousClock.now
       let keys: [URLResourceKey] = [.isDirectoryKey, .isPackageKey]
@@ -36,6 +37,7 @@ enum FileScanner {
             options: [.skipsPackageDescendants], errorHandler: { _, _ in true }
          ) else { continue }
          for case let url as URL in walk {
+            if Task.isCancelled { return found }
             if isSkipped(url.lastPathComponent) {
                walk.skipDescendants()
                continue

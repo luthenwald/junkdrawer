@@ -44,9 +44,11 @@ final class FilesSource {
       scan?.cancel()
       scan = Task { [scope] in
          let home = FileManager.default.homeDirectoryForCurrentUser.path
-         let files = await Task.detached {
+         // A detached task is not cancelled with this one, so it is told.
+         let work = Task.detached {
             Files(roots: scope.folders, entries: FileScanner.scan(scope.folders, depth: scope.depth), home: home)
-         }.value
+         }
+         let files = await withTaskCancellationHandler { await work.value } onCancel: { work.cancel() }
          guard !Task.isCancelled else { return }
          publish(files)
       }
