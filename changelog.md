@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## File search
+
+0.2.0 · 2026-11-22 · `prqlxnvw::rmrmnkvo`
+
 - New: Type `/` to find files and folders by name in the folders you choose in Settings. `↵` opens one, `⌘↵` shows it in Finder and `⇧⌘↵` copies its path.
 - New: Settings has a Files section for those folders and how deep to look into them.
 - Improved: The Settings window scrolls when it is taller than your screen.

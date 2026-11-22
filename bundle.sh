@@ -2,8 +2,8 @@
 set -e
 APP=Junkdrawer
 ID=junkdrawer.junkdrawer
-VERSION=0.1.0
-BUILD=1
+VERSION=0.2.0
+BUILD=2
 # A stable identity keeps the Accessibility grant across builds. Create it once
 # in Keychain Access: Certificate Assistant, Create a Certificate, Code Signing.
 SIGN_ID="${SIGN_ID:-junkdrawer local}"
