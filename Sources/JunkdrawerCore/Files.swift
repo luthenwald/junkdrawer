@@ -33,8 +33,8 @@ public struct Files: Sendable {
    public init(roots: [String] = [], entries: [FileEntry] = [], home: String = "") {
       self.roots = roots
       items = entries.map { fileItem($0, home: home) }
-      names = items.map { Array($0.title.lowercased().utf8) }
-      paths = entries.map { Array(relative($0.path, to: $0.root).lowercased().utf8) }
+      names = items.map { Array(searchKey($0.title).utf8) }
+      paths = entries.map { Array(searchKey(relative($0.path, to: $0.root)).utf8) }
       lengths = entries.map(\.path.utf8.count)
       positions = Dictionary(items.enumerated().map { ($1.id, $0) }) { first, _ in first }
    }
@@ -68,6 +68,12 @@ private func relative(_ path: String, to root: String) -> String {
    path.hasPrefix(root + "/") ? String(path.dropFirst(root.count + 1)) : path
 }
 
+/// Lowercased and composed. Names on disk are often decomposed while typed
+/// text is composed, and bytes only compare equal in one form.
+private func searchKey(_ text: String) -> String {
+   text.lowercased().precomposedStringWithCanonicalMapping
+}
+
 /// What `/` with nothing chosen shows: one row that opens Settings.
 let chooseFoldersItem = Item(
    id: "cmd:settings", kind: .command, title: "Choose folders to search", subtitle: "in Settings, under Files",
@@ -77,10 +83,18 @@ let chooseFoldersItem = Item(
 /// The `/` mode: the name score, or half the score on the path below the
 /// chosen folder when that is better, plus the frecency bonus; folders a
 /// little ahead of files. Ties put shorter paths first. Scores come from
-/// the bytes; the matched characters only for the rows returned.
+/// the bytes; the matched characters only for the rows returned. Text beyond
+/// ASCII is scored by characters, since the bytes of one character can be
+/// found in order across several others.
 func fileRows(_ text: String, in files: Files, usage: Usage, now: Date) -> [Row] {
-   let needle = Array(text.lowercased().utf8)
+   let key = searchKey(text)
+   let needle = Array(key.utf8)
    let letters = needle.filter { $0 != UInt8(ascii: " ") }
+   let characters = needle.allSatisfy { $0 < 0x80 } ? nil : Array(key)
+   func score(in hay: [UInt8]) -> Double? {
+      guard let characters else { return match(needle, in: hay)?.score }
+      return match(characters, in: Array(String(decoding: hay, as: UTF8.self)))?.score
+   }
    // Few files were ever picked, so the bonus is worked out for those only.
    let bonus = Dictionary(uniqueKeysWithValues: usage.picks.keys.compactMap { id in
       files.positions[id].map { ($0, usage.bonus(for: id, now: now)) }
@@ -89,8 +103,8 @@ func fileRows(_ text: String, in files: Files, usage: Usage, now: Date) -> [Row]
       // The path below the folder holds the name, so a file whose path
       // lacks the letters in order matches neither.
       guard holds(letters, in: files.paths[index]) else { return nil }
-      let name = match(needle, in: files.names[index])?.score
-      let path = match(needle, in: files.paths[index]).map { 0.5 * $0.score }
+      let name = score(in: files.names[index])
+      let path = score(in: files.paths[index]).map { 0.5 * $0 }
       let best: (score: Double, byName: Bool)? = switch (name, path) {
       case let (name?, path?) where path > name: (path, false)
       case let (name?, _): (name, true)
