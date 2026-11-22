@@ -1,22 +1,36 @@
 ; the tasks of junkdrawer. `el` lists them.
 
-(task (build)
+(define app "Junkdrawer")
+(define project app)
+
+(alias b build)
+(alias r run)
+(alias i install)
+(alias c check)
+
+(task (build [-r --release "Build with optimizations."])
   "Build a debug binary."
-  {swift build})
+  (sources "Sources/**/*.swift" "Package.swift")
+  {swift build ,(and release '(-c release))})
 
 (task (bundle)
-  "Build build/Junkdrawer.app, signed with the local identity when it exists."
+  "Build the app in build/, signed the way bundle.sh says."
   {./bundle.sh})
 
 (task (run : bundle _quit)
-  "Quit a running Junkdrawer and open the freshly bundled app."
-  {open build/Junkdrawer.app})
+  "Quit the running app and open the freshly bundled one."
+  {open ,(str "build/" app ".app")})
 
 (task (install : bundle _quit)
-  "Replace /Applications/Junkdrawer.app with the bundled app and open it."
-  {rm -rf /Applications/Junkdrawer.app}
-  {cp -R build/Junkdrawer.app /Applications/}
-  {open /Applications/Junkdrawer.app})
+  "Replace the app in /Applications with the bundled one and open it."
+  {rm -rf ,(str "/Applications/" app ".app")}
+  {cp -R ,(str "build/" app ".app") /Applications/}
+  {open ,(str "/Applications/" app ".app")})
+
+; opening the app while the old process is still exiting fails with error -600.
+(task (_quit)
+  "Quit the running app and wait until it is gone."
+  (script "sh" "pkill -x \"$1\" && while pgrep -x \"$1\" > /dev/null; do sleep 0.1; done || true" app))
 
 (task (data)
   "Download the pinned Unicode, CLDR and LaTeX source files into data/."
@@ -30,7 +44,105 @@
   "Show recent log lines from the running app."
   {log show --last 10m --predicate 'subsystem == "junkdrawer.junkdrawer"' --style compact})
 
-; opening the app while the old process is still exiting fails with error -600.
-(task (_quit)
-  "Quit a running Junkdrawer and wait until it is gone."
-  (script "sh" "pkill -x \"$1\" && while pgrep -x \"$1\" > /dev/null; do sleep 0.1; done || true" "Junkdrawer"))
+(task (check : build)
+  "The build, which is the only check there is.")
+
+; where the version lives; the build number goes up by one with each release.
+(define (version)
+  (out {perl -ne ,#"print $1 if /^VERSION=(.*)/"# bundle.sh}))
+
+(define (set-version v)
+  {perl -pi -e ,(str #"s/^VERSION=\K.*/"# v #"/; s/^BUILD=\K(\d+)/$1 + 1/e"#) bundle.sh})
+
+; ---- release ----
+; the same text in each of our projects. it relies on `project`, `version`,
+; `set-version` and the `check` task defined above.
+
+(define unreleased-bullets
+  {awk "/^## /{ if (on) exit; on = ($0 == \"## Unreleased\"); next } on && NF" changelog.md})
+
+; the change id that ends the newest release range in the changelog, or nothing.
+(define last-released
+  {awk "/^[0-9].*`[a-z]+(::[a-z]+)?`$/ { s = $NF; gsub(/`/, \"\", s); n = split(s, p, \"::\"); print p[n]; exit }" changelog.md})
+
+(define (next-version v level bullets)
+  (let* ([n (map string->number (string-split v "."))]
+         [major (list-ref n 0)]
+         [minor (list-ref n 1)]
+         [patch (list-ref n 2)]
+         [new? (lambda (b) (string-prefix? "- New:" b))])
+    (case (if (eq? level 'auto) (if (pair? (filter new? bullets)) 'minor 'patch) level)
+      [(same) v]
+      [(major) (str (+ major 1) ".0.0")]
+      [(minor) (str major "." (+ minor 1) ".0")]
+      [(patch) (str major "." minor "." (+ patch 1))])))
+
+(define (change-id revset)
+  (car (lines {jj log --no-graph --reversed -r ,revset -T "change_id.shortest(8) ++ \"\\n\""})))
+
+(task (unreleased)
+  "Show the unreleased changes and the version they would be released as."
+  (define bullets (lines unreleased-bullets))
+  (when (null? bullets)
+    (fail "nothing under Unreleased in changelog.md"))
+  (say project " " (version) " -> " (next-version (version) 'auto bullets))
+  (for-each say bullets))
+
+(task (release [level (one-of auto major minor patch same) = auto
+                      "Which part of the version to bump. auto is minor when a bullet starts with New: and patch otherwise; same keeps the version the files have, for a first release."]
+               [-t --title string  "The plain title of the changelog section."]
+               [-R --remote string "The remote to push to, when there are several."]
+               [local -n --no-push "Stop after the tag and main."]
+               [--trailer string   "A last line for the message of the release revision."])
+  "Make a release, once Fable has agreed.
+  Runs the checks, sets the version, moves the unreleased bullets into a section, makes the release revision, tags it, moves main, pushes both and creates the release page. `el :dry release -t x` shows every step."
+  (define bullets (lines unreleased-bullets))
+  (when (null? bullets)
+    (fail "nothing under Unreleased in changelog.md"))
+  (unless (string=? (out {jj diff --name-only}) "")
+    (fail "the working copy has changes; describe them or set them aside first"))
+  (unless title
+    (fail "the changelog section needs a title: --title \"...\""))
+  (define next (next-version (version) level bullets))
+  (define tag (str "v" next))
+  (when (ok? {git rev-parse --quiet --verify ,(str "refs/tags/" tag)})
+    (fail tag " exists already"))
+  (define remotes
+    (map (lambda (l) (car (string-split l))) (lines {jj git remote list})))
+  (define target
+    (cond [local #f]
+          [remote remote]
+          [(null? remotes) #f]
+          [(null? (cdr remotes)) (car remotes)]
+          [else (fail "several remotes; pick one with --remote")]))
+  (define since (out last-released))
+  (define range
+    (str (change-id (str "roots(" (if (string=? since "") "root()" since) "..@)"))
+         "::" (change-id "@")))
+  (when (eq? level 'major)
+    (confirm "Move " project " to " next ", a new major version?"))
+  (confirm "Has Fable agreed that " project " " next " is ready?")
+  (check)
+  (set-version next)
+  (to "changelog.md.new"
+    (with-env "EL_TITLE" title
+      (with-env "EL_LINE" (str next " · " (out {date +%F}) " · `" range "`")
+        {awk "{ print } $0 == \"## Unreleased\" && !done { print \"\"; print \"## \" ENVIRON[\"EL_TITLE\"]; print \"\"; print ENVIRON[\"EL_LINE\"]; done = 1 }" changelog.md})))
+  {mv changelog.md.new changelog.md}
+  {jj describe -m ,(str "release: " next (if trailer (str "\n\n" trailer) ""))}
+  {jj new}
+  ; in a colocated repo HEAD is the parent of the working copy, the release revision.
+  {git tag -a ,tag -m ,(str project " " next "\n\n" (string-join bullets "\n")) HEAD}
+  {jj bookmark set main -r @-}
+  (cond [(not target)
+         (say tag " is tagged and main is on it; nothing was pushed.")]
+        [else
+         {jj git push --remote ,target --bookmark main}
+         {git push ,target ,tag}
+         (if (ok? {gh auth status})
+             {gh release create ,tag --notes-from-tag}
+             (say "gh is not logged in; the release page is left: gh release create " tag " --notes-from-tag"))]))
+
+(handler (yes next)
+  "Answer yes to every question, for a release that was agreed on beforehand."
+  [ask (lambda (text) #t)])
